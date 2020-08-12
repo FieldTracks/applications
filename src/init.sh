@@ -72,6 +72,13 @@ if [ ! -d /data/log/mosquitto ]; then
   chown mosquitto:mosquitto /data/log/mosquitto
 fi
 
+if [ ! -d /data/lib/mosquitto ]; then
+  echo "Generate /data/lib/mosquitto"
+  mkdir -p /data/lib/mosquitto
+  chown mosquitto:mosquitto /data/lib/mosquitto
+fi
+
+
 service apache2 start
 service mosquitto start
 

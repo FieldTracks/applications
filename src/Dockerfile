@@ -54,7 +54,10 @@ RUN dpkg -i /tmp/*.deb && \
     rm /etc/apache2/sites-enabled/* && \
     ln -s /data/etc/apache2/httpd.conf /etc/apache2/sites-enabled/httpd.conf && \
     rm -r /var/log/mosquitto && \
-    ln -s /data/log/mosquitto /var/log/mosquitto
+    ln -s /data/log/mosquitto /var/log/mosquitto && \
+    rm -r /var/lib/mosquitto && \
+    ln -s /data/lib/mosquitto /var/lib/mosquitto
+
 
 COPY mosquitto.conf /etc/mosquitto/conf.d
 COPY init.sh /usr/local/sbin/init.sh

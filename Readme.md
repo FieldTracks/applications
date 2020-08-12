@@ -29,8 +29,7 @@ The data-volume is assumed to be bound to a directory, because some files can be
 * `data/passwd` and `data/group` list all user accounts, which are valid in the system. Typically,
 creating users results in modifying `passwd`, whereas promoting users to be admins is done in `group`. This files 
 are edited by htpasswd.
-In general, admins, users and stones have different permission on the various mqtt-topis. However, this is not implemented, yet.
-* `data/etc/apache2` contains the Apache2 configuration and associated key material.
+In general, admins, users and stones have different permission on the various mqtt-topis. 
 * `data/etc/tls` contains links to the tls certificates used by mosquitto. Changing these results in a different mosquitto configuration
 * `data/etc/mosquitto_passwd` contains accounts for mosquitto. When mosquitto is going to utilizes jwt-tokens, this file is not needed anymore.
 

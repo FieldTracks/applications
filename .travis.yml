@@ -6,14 +6,15 @@ services:
   - docker
 
 script:
-  - echo Arch: $TRAVIS_CPU_ARCH
-  - SUFFIX=$(if [ "$TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker build -t fieldtracks/fieldtracks${SUFFIX}:latest src/
+  - export SUFFIX=$(if [ "$TRAVIS_CPU_ARCH" = "arm64" ]; then echo "-rpi"; fi)
+  - echo Suffix :${SUFFIX}
+  - docker build -t fieldtracks/fieldtracks${SUFFIX}:latest src/
 
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 deploy:
   provider: script
-  script: SUFFIX=$(if [ "$TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker push fieldtracks/fieldtracks${SUFFIX}:latest
+  script: docker push fieldtracks/fieldtracks${SUFFIX}:latest
   on:
     branch: master

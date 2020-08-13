@@ -1,14 +1,18 @@
+arch:
+  - amd64
+  - arm64
+
 services:
   - docker
 
 script:
-  - make
+  - SUFFIX=$(if [ "TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker build -t fieldtracks${SUFFIX}:latest src/
 
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 deploy:
   provider: script
-  script: bash docker push fieldtracks:latest
+  script: SUFFIX=$(if [ "TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker push fieldtracks/fieldtracks${SUFFIX}:latest
   on:
     branch: master

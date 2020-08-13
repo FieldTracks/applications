@@ -1,4 +1,4 @@
-Ths git repo contains all files needed to create a Docker image hosting an environment.
+This git repo contains all files needed to create a Docker image hosting an environment.
 Typically, environments can be started in the cloud or locally.
 
 `run.sh` provides an example for starting a Docker container. It executes:
@@ -10,28 +10,48 @@ docker run \
   --rm \
   -it \
   -p 8485:80 \
+  -p 8443:443 \
+  -p 2225:22 \
+  -p 2883:1883 \
+  -p 8883:8883 \
   --mount type=bind,source="$(pwd)"/data,target=/data \
   fieldtracks:latest
 ```
 
-The data-directory contains the configuration, the key material and messages persisted message in mosquitto. 
-The latter is not implemented, yet.
+The data-directory contains the configuration, the key material and messages persisted message in mosquitto.
+During start, a the resulting Docker container generates and logs random password for mqtt users (stone, admin). 
 
 An [easy-rsa](https://github.com/OpenVPN/easy-rsa) base certificate authority (CA) is generated during boot. 
-Its key material is used by JellingStone devices. Hence, it is also used by mosquittos mqtt listeners.
+Its key material is used by JellingStone devices. Hence, it is also used by mosquittos mqtt listeners and apache2.
 
-The image also starts an apache2-deamon handing out JWT tokens. Apache2 does not use TLS, as this would require universal 
-valid certificates (e.g. based on letsencrypt). However, this docker image is designed not to rely
-on external connectivity (e.g. for setting up local development environments). In consequence, it is assumed
-that TLS is implemented by a 3rd party container; for both MQTT/websocket and HTTP. (TBD: Propose a 3rd party container for doing so.)
+The resulting image starts an apache2-deamon handing out JWT tokens. By default, Apache's TLS listener also uses
+the certificates provided by easy-rsa. To use a valid certificate, you can either install the easy-rsa one in your local
+browser (preferred for a development enviroment) or utilize valid TLS certificates gathered from Let's encrypt.
+The latter requires an additional container (for production use, 
+e.g. https://github.com/matrix-org/docker-dehydrated).
 
-The data-volume is assumed to be bound to a directory, because some files can be edited by hand:
-* `data/passwd` and `data/group` list all user accounts, which are valid in the system. Typically,
-creating users results in modifying `passwd`, whereas promoting users to be admins is done in `group`. This files 
-are edited by htpasswd.
+
+The data-volume is designed to be bound to a directory, because some files can be edited or read by hand:
+* `passwd` list all user accounts, which are valid for jwt. It is edited through htpasswd.
 In general, admins, users and stones have different permission on the various mqtt-topis. 
-* `data/etc/tls` contains links to the tls certificates used by mosquitto. Changing these results in a different mosquitto configuration
-* `data/etc/mosquitto_passwd` contains accounts for mosquitto. When mosquitto is going to utilizes jwt-tokens, this file is not needed anymore.
+* `etc/tls` contains links to the TLS certificates used by mosquitto. Changing these results in a different mosquitto configuration
+* `etc/mqtt/mosquitto_passwd` contains accounts for mosquitto. When mosquitto is going to utilizes jwt-tokens, this file is not needed anymore.
+* `etc/mqtt/mqtt_passwd_stone_clear.txt` has
+* `etc/apache/vhosts.conf` has Apache's vhost configuration. 
+* `log/` contains log-output from both mosquitto and apache2.
+
+## SSH-Configuration
+
+The resulting container generates SSH-keys on boot. Persisting keys across container re-recreation
+requires addtional volumes, but avoid bind-mounts to maintain the existing configuration.
+```
+--mount source=ft-ssh,destination=/etc/ssh \
+```
+However, a bind mount can be ideal to hook in your personal SSH-key; it must belong to root.
+``` 
+--mount type=bind,source=/path/to/.ssh/id_rsa.pub,destination=/root/.ssh/authorized_keys \
+```
+
 
 ## Building the container 
 The container is build by executing `make`. Corresponding sources are available in `./src`.  

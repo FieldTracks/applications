@@ -79,7 +79,6 @@ if [ ! -d /data/etc/apache2 ]; then
   echo "Copy apache2 configuration"
   mkdir /data/etc/apache2
   cp /etc/apache2/sites-available/vhosts.conf /data/etc/apache2
-  cp /etc/apache2/conf-available/fieldtracks.conf /data/etc/apache2
 
   echo "Generate cryptographic data for Apache2"
   openssl ecparam -name secp256k1 -genkey -noout -out /data/etc/apache2/ec-priv.pem
@@ -109,12 +108,6 @@ if [ ! -d /data/lib/mosquitto ]; then
   echo "Generate /data/lib/mosquitto"
   mkdir -p /data/lib/mosquitto
   chown mosquitto:mosquitto /data/lib/mosquitto
-fi
-# Generate SSH configuration
-
-if [ ! -f /data/etc/authorized_keys ]; then
-  echo "Generate SSH configuration"
-  touch /data/etc/authorized_keys
 fi
 
 dpkg-reconfigure openssh-server #Generate server keys

@@ -19,7 +19,8 @@ RUN apt-get update && apt-get install -y libtool \
     gccgo \
     golang \
     mosquitto-dev \
-    libmosquitto-dev
+    libmosquitto-dev \
+    npm
 # File missing in mosquitto-dev as of Debian Buster
 # This hack is no longer needed for 1.6.9 (currently in Debian Sid)
 ADD https://raw.githubusercontent.com/eclipse/mosquitto/1.5.x/src/mosquitto_broker.h /usr/include
@@ -41,6 +42,10 @@ RUN cd / && git clone https://github.com/AnthonyDeroche/mod_authnz_jwt && \
 RUN cd / && git clone https://github.com/iegomez/mosquitto-go-auth.git && \
     cd /mosquitto-go-auth && \
     CGO_CFLAGS="-I/usr/include -fPIC" CGO_LDFLAGS="-shared" make
+RUN cd / && git clone https://github.com/FieldTracks/fieldmon.git && \
+    npm install -g @angular/cli && \
+    cd /fieldmon && \
+    npm install && ng build --configuration=docker
 
 # This is the actual container for a fieldtracks env
 # This container runs both mqtt and webdav service
@@ -58,12 +63,15 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
 COPY --from=build /libjwt/*.deb /tmp
 COPY --from=build /mod_authnz_jwt/*.deb /tmp
+COPY --from=build /fieldmon/dist/* /var/www/html
+
 RUN dpkg -i /tmp/*.deb && \
     a2enmod dav && \
     a2enmod dav_fs && \
     a2enmod ssl && \
     a2enmod auth_jwt && \
     a2enmod authz_groupfile  && \
+    a2enmod rewrite  && \
     rm /etc/apache2/sites-enabled/* && \
     ln -s /data/etc/apache2/vhosts.conf /etc/apache2/sites-enabled/vhosts.conf && \
     rm -r /var/log/mosquitto && \
@@ -71,7 +79,7 @@ RUN dpkg -i /tmp/*.deb && \
     rm -r /var/lib/mosquitto && \
     ln -s /data/lib/mosquitto /var/lib/mosquitto && \
     rm -r /etc/ssh/ssh_host_* && \
-    mkdir /root/.ssh/ && ln -s /data/etc/authorized_keys /root/.ssh/authorized_keys && \
+    mkdir /root/.ssh/ && \
     mkdir -p /usr/local/share/ca-certificates/fieldtracks && \
     ln -s /data/etc/tls/web.ca.crt /usr/local/share/ca-certificates/fieldtracks/web.ca.crt && \
     ln -s /data/etc/tls/ca.crt /usr/local/share/ca-certificates/fieldtracks/ca.crt
@@ -82,7 +90,7 @@ COPY vars /usr/share/easy-rsa
 COPY openssl-easyrsa.cnf /usr/share/easy-rsa
 COPY apache/vhosts.conf /etc/apache2/sites-available
 COPY apache/fieldtracks.conf /etc/apache2/conf-available/
-COPY apache/api.json /var/www/html/
+COPY apache/check_bearer.json /var/www/api/check_bearer.json
 
 EXPOSE 80/tcp
 EXPOSE 1883/tcp

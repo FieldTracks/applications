@@ -6,7 +6,7 @@ services:
   - docker
 
 script:
-  - SUFFIX=$(if [ "TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker build -t fieldtracks${SUFFIX}:latest src/
+  - SUFFIX=$(if [ "TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker build -t fieldtracks/fieldtracks${SUFFIX}:latest src/
 
 before_deploy:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin

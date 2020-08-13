@@ -6,7 +6,7 @@ services:
   - docker
 
 script:
-  - echo "Arch: $TRAVIS_CPU_ARCH"
+  - echo Arch: $TRAVIS_CPU_ARCH
   - SUFFIX=$(if [ "$TRAVIS_CPU_ARCH" == "arm64" ]; then echo "-rpi"; fi) docker build -t fieldtracks/fieldtracks${SUFFIX}:latest src/
 
 before_deploy:

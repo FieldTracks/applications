@@ -46,6 +46,16 @@ RUN cd / && git clone https://github.com/FieldTracks/fieldmon.git && \
     npm install -g @angular/cli && \
     cd /fieldmon && \
     npm install && ng build --configuration=docker
+RUN cd / && git clone https://github.com/FieldTracks/StoneAggregator.git && \
+    cd StoneAggregator/packaging && \
+    BUILD_NUMBER=$(date +%s) ./build.sh
+RUN cd / && git clone https://github.com/FieldTracks/StoneSimulator.git && \
+    cd StoneSimulator/packaging && \
+    BUILD_NUMBER=$(date +%s) ./build.sh
+RUN cd / && git clone https://github.com/FieldTracks/StoneFlashtool.git && \
+    cd StoneFlashtool/packaging && \
+    BUILD_NUMBER=$(date +%s) ./build.sh
+
 
 # This is the actual container for a fieldtracks env
 # This container runs both mqtt and webdav service
@@ -59,12 +69,14 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 	apt-utils \
 	easy-rsa \
 	makepasswd \
-	openssh-server
+	openssh-server \
+	python3-pip \
+	libmariadbclient-dev \
+	libmariadb-dev-compat
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
-COPY --from=build /libjwt/*.deb /tmp
-COPY --from=build /mod_authnz_jwt/*.deb /tmp
 COPY --from=build /fieldmon/dist/* /var/www/html
 
+COPY --from=build "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
 RUN dpkg -i /tmp/*.deb && \
     a2enmod dav && \
     a2enmod dav_fs && \
@@ -86,17 +98,13 @@ RUN dpkg -i /tmp/*.deb && \
 
 COPY mosquitto.conf /etc/mosquitto/conf.d
 COPY init.sh /usr/local/sbin/init.sh
-COPY vars /usr/share/easy-rsa
-COPY openssl-easyrsa.cnf /usr/share/easy-rsa
+COPY vars openssl-easyrsa.cnf /usr/share/easy-rsa/
 COPY apache/vhosts.conf /etc/apache2/sites-available
 COPY apache/fieldtracks.conf /etc/apache2/conf-available/
 COPY apache/check_bearer.json /var/www/api/check_bearer.json
+COPY stoneaggregator.config.ini /usr/local/etc
 
-EXPOSE 80/tcp
-EXPOSE 1883/tcp
-EXPOSE 8883/tcp
-EXPOSE 22/tcp
-EXPOSE 443/tcp
+EXPOSE 80/tcp 1883/tcp 8883/tcp 22/tcp 443/tcp
 
 ENTRYPOINT ["/usr/local/sbin/init.sh"]
 VOLUME /data

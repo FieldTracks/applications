@@ -116,7 +116,5 @@ update-ca-certificates # User could have changed key material
 service apache2 start
 service mosquitto start
 service ssh start
-/usr/local/bin/stoneaggregator /usr/local/etc/stoneaggregator.config.ini &
+/usr/local/bin/stoneaggregator /usr/local/etc/stoneaggregator.config.ini
 
-# Start an interactive shell in case sombody attaches
-/bin/bash

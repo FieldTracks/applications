@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  app:
+    image: fieldtracks/fieldtracks:latest
+    container_name: ft-dev
+    hostname: local-dev.fieldtracks.org
+    #restart: unless-stopped
+    ports:
+    - 127.0.0.1:8485:80
+    - 127.0.0.1:8443:443
+    - 127.0.0.1:2225:22
+    - 127.0.0.1:2883:1883
+    - 127.0.0.1:8883:8883
+    #ports:
+    #  - 127.0.0.1:5000:80
+    # When using external logging
+    #    logging:
+    #      driver: $LOG_DRIVER
+    #      options:
+    #        syslog-address: $LOG_ADDRESS
+    #        tag: $LOG_TAG
+    volumes:
+      - ./data:/data
+     # - ft-ssh:/etc/sshcurl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    # When using sqlite3 as the database
+    #      - ./db/production:/usr/src/app/db/production
+    # When using postgresql as the database
+    #links:
+    #  - db
+  dehydrated:
+    image:  matrixdotorg/dehydrated:latest
+    container_name: ft-dehydrated
+    hostname: local-dev.fieldtracks.org
+    command: "bash -c 'pip3 install dns-lexicon[henet] && /bin/s6-svscan /etc/s6.d'"
+    volumes:
+      - ./data/dehydrated:/data
+    environment:
+      - DEHYDRATED_GENERATE_CONFIG=yes
+      - DEHYDRATED_ACCEPT_TERMS=yes
+      - DEHYDRATED_EMAIL=info@fieldtracks.org
+      - DEHYDRATED_CA=https://acme-staging-v02.api.letsencrypt.org/directory
+      - DEHYDRATED_CHALLENGE=dns-01
+      - PROVIDER=henet
+      - LEXICON_HENET_USERNAME=XXXX
+      - LEXICON_HENET_PASSWORD=XXXX
+      - DEHYDRATED_HOOK="/usr/local/bin/lexicon-hook"
+      - DEHYDRATED_DOMAIN=local-dev.fieldtracks.org
+
+
+  #db:
+  #  image: postgres:9.5
+  #  restart: unless-stoppedDEHYDRATED_GENERATE_CONFIG="yes"
+  #  ports:
+  #    - 127.0.0.1:5432:5432
+  #  volumes:
+  #    - ./db/production:/var/lib/postgresql/data
+  #  environment:
+  #    - POSTGRES_DB=postgres
+  #    - POSTGRES_USER=postgres
+  #    - POSTGRES_PASSWORD=password

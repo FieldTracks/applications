@@ -90,7 +90,7 @@ RUN dpkg -i /tmp/*.deb && \
     ln -s /data/log/mosquitto /var/log/mosquitto && \
     rm -r /var/lib/mosquitto && \
     ln -s /data/lib/mosquitto /var/lib/mosquitto && \
-    rm -r /etc/ssh/ssh_host_* && \
+    rm -r /etc/ssh/sshcurl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-composecurl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose_host_* && \
     mkdir /root/.ssh/ && \
     mkdir -p /usr/local/share/ca-certificates/fieldtracks && \
     ln -s /data/etc/tls/web.ca.crt /usr/local/share/ca-certificates/fieldtracks/web.ca.crt && \

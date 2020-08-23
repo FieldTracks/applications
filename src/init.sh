@@ -110,7 +110,7 @@ if [ ! -d /data/lib/mosquitto ]; then
   chown mosquitto:mosquitto /data/lib/mosquitto
 fi
 
-dpkg-reconfigure openssh-server #Generate server keys
+dpkg-reconfigure -f openssh-server #Generate server keys
 update-ca-certificates # User could have changed key material
 
 service apache2 start

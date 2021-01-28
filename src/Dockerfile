@@ -76,7 +76,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
 COPY --from=build /fieldmon/dist/* /var/www/html
 
-COPY --from=build "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
+COPY --from=build "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
 RUN dpkg -i /tmp/*.deb && \
     a2enmod dav && \
     a2enmod dav_fs && \

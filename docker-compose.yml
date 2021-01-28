@@ -29,7 +29,7 @@ services:
       - DEHYDRATED_GENERATE_CONFIG=yes
       - DEHYDRATED_ACCEPT_TERMS=yes
       - DEHYDRATED_EMAIL=info@fieldtracks.org
-      - DEHYDRATED_CA=https://acme-staging-v02.api.letsencrypt.org/directory
+      - DEHYDRATED_CA=https://acme-v02.api.letsencrypt.org/directory # Mind: This is STAGING not production
       - DEHYDRATED_CHALLENGE=dns-01
       - PROVIDER=henet
       #- LEXICON_HENET_USERNAME= # Provided by henet_login.source when sources

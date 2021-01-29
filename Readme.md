@@ -21,6 +21,8 @@ docker run \
 The data-directory contains the configuration, the key material and messages persisted message in mosquitto.
 During start, a the resulting Docker container generates and logs random password for mqtt users (stone, admin). 
 
+*Note: A valid TLS certificate (Let's encrypt) for local-dev.fieldtracks.org is privatly available at https://git.freifunk-koeln.de/FieldTracks/local-dev-cert/-/jobs/artifacts/master/browse?job=deploy*.
+
 An [easy-rsa](https://github.com/OpenVPN/easy-rsa) base certificate authority (CA) is generated during boot. 
 Its key material is used by JellingStone devices. Hence, it is also used by mosquittos mqtt listeners and apache2.
 

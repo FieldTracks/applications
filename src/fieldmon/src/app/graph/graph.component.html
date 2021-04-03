@@ -1,0 +1,30 @@
+<app-d3-widget></app-d3-widget>
+
+
+<mat-menu #menu="matMenu">
+  <button mat-menu-item class="upload-drop-zone" (click)="openDialog()">
+    <mat-icon>layers</mat-icon>
+    <span>Select Background Image</span>
+  </button>
+  <button mat-menu-item (click)="openSettingsDialog()">
+    <mat-icon>build</mat-icon>
+    <span>Settings</span>
+  </button>
+
+  <button mat-menu-item *ngIf="graphConfig.showUnnamned" (click)="showUnnamed(false)" >
+    <mat-icon>check_box</mat-icon>
+    <span>Show unnamed devices</span>
+  </button>
+  <button mat-menu-item *ngIf="!graphConfig.showUnnamned" (click)="showUnnamed(true)" >
+    <mat-icon>check_box_outline_blank</mat-icon>
+    <span>Show unnamned devices</span>
+  </button>
+  <button mat-menu-item *ngIf="graphConfig.showLastContacts" (click)="showLastContact(false)">
+    <mat-icon>check_box</mat-icon>
+    <span>Show last contact</span>
+  </button>
+  <button mat-menu-item *ngIf="!graphConfig.showLastContacts" (click)="showLastContact(true)">
+    <mat-icon>check_box_outline_blank</mat-icon>
+    <span>Show last contact</span>
+  </button>
+</mat-menu>

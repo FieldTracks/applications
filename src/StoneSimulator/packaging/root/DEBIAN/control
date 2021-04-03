@@ -1,0 +1,8 @@
+Package: stonesimulator
+Version: 1.0-##BUILDNR##
+Section: base
+Priority: optional
+Architecture: all
+Depends: python3, python3-pip
+Maintainer: Henrik Schnor <hschnor@mailbox.org>
+Description: Simulates stones sensor data for testing

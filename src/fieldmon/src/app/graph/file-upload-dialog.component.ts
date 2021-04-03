@@ -67,11 +67,19 @@ export class FileUploadDialogComponent implements OnInit, OnDestroy {
         if (next && HttpEventType.Response === next.type)  {
           this.dialogRef.close(next.webDavUrl);
         }
-      }, (error) => {this.error = error; });
+      }, (error) => {
+        console.log("Error", error)
+        // In some weired situations, angular has problems parsing a successfully response
+        // It says: "Http failure during parsing for http://localhost:4200/api/webdav_jwt/..."
+        // However, if we check the http-status, everything is fine
+        if(error.status < 400) { // http return-codes >= 400 are errors
+          this.dialogRef.close(error.url);
+        }
+        this.error = error;
+      });
   }
 
   cancel() {
-  //  this.dialogRef = null;
     if (this.httpSubscription) {
       this.ngUnsubscribe.next();
       this.ngUnsubscribe.complete();

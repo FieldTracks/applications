@@ -18,7 +18,7 @@ import {LoginService} from './login.service';
 export const MQTT_SERVICE_OPTIONS: IMqttServiceOptions = {
   hostname: environment.mqtt_broker,
   port: environment.mqtt_port,
-  path: environment.mqtt_path,
+  path: "",
   protocol: 'wss',
   connectOnCreate: false,
 };
@@ -33,7 +33,6 @@ export class MqttAdapterService implements OnDestroy {
   constructor(private router: Router, private loginService: LoginService) {
     MQTT_SERVICE_OPTIONS.password = 'jwt';
     MQTT_SERVICE_OPTIONS.username = loginService.tokenSubject.getValue();
-    console.log('Setting token', MQTT_SERVICE_OPTIONS.username);
     this.loginSubscript = loginService.token().subscribe( (v) => this.credential_update(v));
   }
 

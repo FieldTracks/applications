@@ -15,7 +15,7 @@ export class WebdavService {
 
   put(filename: string, data: any): Observable<any> {
     const fn = filename;
-    const webDavUrl = `https://${environment.mqtt_broker}/webdav/${Date.now()}-${fn}`;
+    const webDavUrl = `/api/webdav_jwt/${Date.now()}-${fn}`;
 
    const req = new HttpRequest('PUT', webDavUrl, data, {
      reportProgress: true

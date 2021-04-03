@@ -1,0 +1,11 @@
+[Unit]
+Description=StoneSimulator service file
+
+[Service]
+EnvironmentFile=/etc/stonesimulator/config
+ExecStart=/usr/local/bin/stonesimulator --host $STONESIM_HOST --port $STONESIM_PORT --user $STONESIM_USER --passwd $STONESIM_PASSWD --size $STONESIM_SIZE --interval $STONESIM_INTERVAL --stones $STONESIM_STONES --cert $STONESIM_CERT $STONESIM_ADDITIONAL_FLAGS --tls $STONESIM_TLS
+TimeoutStopSec=10
+ExecStop=/bin/kill -2 $MAINPID
+
+[Install]
+WantedBy=multi-user.target

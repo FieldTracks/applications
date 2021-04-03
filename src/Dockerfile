@@ -42,7 +42,7 @@ RUN cd / && git clone https://github.com/iegomez/mosquitto-go-auth.git && \
     cd /mosquitto-go-auth && \
     CGO_CFLAGS="-I/usr/include -fPIC" CGO_LDFLAGS="-shared" make
 
-FROM debian:buster as build-fieldtracks
+FROM debian:buster as build-fieldmon
 RUN apt-get update && apt-get install -y npm \
     git
 
@@ -50,14 +50,20 @@ RUN cd / && git clone https://github.com/FieldTracks/fieldmon.git && \
     npm install -g @angular/cli && \
     cd /fieldmon && \
     npm install && ng build --configuration=docker
-RUN cd / && git clone https://github.com/FieldTracks/StoneAggregator.git && \
-    cd StoneAggregator/packaging && \
+
+FROM python:3.9-buster as python-build
+RUN apt update && apt install -y fakeroot
+
+COPY StoneAggregator /StoneAggregator
+RUN cd /StoneAggregator/packaging && \
     BUILD_NUMBER=$(date +%s) ./build.sh
-RUN cd / && git clone https://github.com/FieldTracks/StoneSimulator.git && \
-    cd StoneSimulator/packaging && \
+
+COPY StoneSimulator /StoneSimulator
+RUN cd /StoneSimulator/packaging && \
     BUILD_NUMBER=$(date +%s) ./build.sh
-RUN cd / && git clone https://github.com/FieldTracks/StoneFlashtool.git && \
-    cd StoneFlashtool/packaging && \
+
+COPY StoneFlashtool /StoneFlashtool
+RUN cd /StoneFlashtool/packaging && \
     BUILD_NUMBER=$(date +%s) ./build.sh
 
 
@@ -78,10 +84,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 	libmariadbclient-dev \
 	libmariadb-dev-compat
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
-COPY --from=build-fieldtracks /fieldmon/dist/* /var/www/html
+COPY --from=build "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
 
-COPY  --from=build "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
-COPY --from=build-fieldtracks "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" /tmp/
+COPY --from=build-fieldmon /fieldmon/dist/* /var/www/html
+COPY --from=python-build "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" /tmp/
 RUN dpkg -i /tmp/*.deb && \
     a2enmod dav && \
     a2enmod dav_fs && \
@@ -102,7 +108,7 @@ RUN dpkg -i /tmp/*.deb && \
     ln -s /data/etc/tls/ca.crt /usr/local/share/ca-certificates/fieldtracks/ca.crt
 
 COPY configs/mosquitto.conf /etc/mosquitto/conf.d
-COPY configs/init.sh /usr/local/sbin/init.sh
+COPY init.sh /usr/local/sbin/init.sh
 COPY configs/vars configs/openssl-easyrsa.cnf /usr/share/easy-rsa/
 COPY configs/apache/vhosts.conf /etc/apache2/sites-available
 COPY configs/apache/fieldtracks.conf /etc/apache2/conf-available/

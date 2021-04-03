@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { D3WidgetComponent } from './d3-widget.component';
 
@@ -6,7 +6,7 @@ describe('D3WidgetComponent', () => {
   let component: D3WidgetComponent;
   let fixture: ComponentFixture<D3WidgetComponent>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ D3WidgetComponent ]
     })

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { FileUploadDialogComponent } from './file-upload-dialog.component';
 
@@ -6,7 +6,7 @@ describe('FileUploadDialogComponent', () => {
   let component: FileUploadDialogComponent;
   let fixture: ComponentFixture<FileUploadDialogComponent>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [ FileUploadDialogComponent ]
     })

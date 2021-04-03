@@ -42,14 +42,16 @@ RUN cd / && git clone https://github.com/iegomez/mosquitto-go-auth.git && \
     cd /mosquitto-go-auth && \
     CGO_CFLAGS="-I/usr/include -fPIC" CGO_LDFLAGS="-shared" make
 
+FROM node:14 as build-angular
+RUN npm install @angular/cli@v10
+COPY fieldmon /fieldmon
+RUN cd /fieldmon && \
+    npm install \
+    ng build --configuration=docker
+
 FROM debian:buster as build-fieldmon
 RUN apt-get update && apt-get install -y npm \
     git
-
-RUN cd / && git clone https://github.com/FieldTracks/fieldmon.git && \
-    npm install -g @angular/cli && \
-    cd /fieldmon && \
-    npm install && ng build --configuration=docker
 
 FROM python:3.9-buster as python-build
 RUN apt update && apt install -y fakeroot
@@ -86,7 +88,7 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
 COPY --from=build "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
 
-COPY --from=build-fieldmon /fieldmon/dist/* /var/www/html
+COPY --from=build-angular /fieldmon/dist/* /var/www/html
 COPY --from=python-build "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" /tmp/
 RUN dpkg -i /tmp/*.deb && \
     a2enmod dav && \
@@ -120,4 +122,3 @@ EXPOSE 80/tcp 1883/tcp 8883/tcp 22/tcp 443/tcp
 ENTRYPOINT ["/usr/local/sbin/init.sh"]
 VOLUME /data
 #USER fieldtracks
-

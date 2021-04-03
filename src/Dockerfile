@@ -43,10 +43,10 @@ RUN cd / && git clone https://github.com/iegomez/mosquitto-go-auth.git && \
     CGO_CFLAGS="-I/usr/include -fPIC" CGO_LDFLAGS="-shared" make
 
 FROM node:14 as build-angular
-RUN npm install @angular/cli@v10
+RUN npm install -g @angular/cli@v10
 COPY fieldmon /fieldmon
 RUN cd /fieldmon && \
-    npm install \
+    npm install && \
     ng build --configuration=docker
 
 FROM debian:buster as build-fieldmon

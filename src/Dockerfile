@@ -19,8 +19,7 @@ RUN apt-get update && apt-get install -y libtool \
     gccgo \
     golang \
     mosquitto-dev \
-    libmosquitto-dev \
-    npm
+    libmosquitto-dev
 # File missing in mosquitto-dev as of Debian Buster
 # This hack is no longer needed for 1.6.9 (currently in Debian Sid)
 ADD https://raw.githubusercontent.com/eclipse/mosquitto/1.5.x/src/mosquitto_broker.h /usr/include
@@ -42,6 +41,11 @@ RUN cd / && git clone https://github.com/AnthonyDeroche/mod_authnz_jwt && \
 RUN cd / && git clone https://github.com/iegomez/mosquitto-go-auth.git && \
     cd /mosquitto-go-auth && \
     CGO_CFLAGS="-I/usr/include -fPIC" CGO_LDFLAGS="-shared" make
+
+FROM debian:buster as build-fieldtracks
+RUN apt-get update && apt-get install -y npm \
+    git
+
 RUN cd / && git clone https://github.com/FieldTracks/fieldmon.git && \
     npm install -g @angular/cli && \
     cd /fieldmon && \
@@ -74,9 +78,10 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 	libmariadbclient-dev \
 	libmariadb-dev-compat
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
-COPY --from=build /fieldmon/dist/* /var/www/html
+COPY --from=build-fieldtracks /fieldmon/dist/* /var/www/html
 
-COPY --from=build "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
+COPY  --from=build "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
+COPY --from=build-fieldtracks "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" /tmp/
 RUN dpkg -i /tmp/*.deb && \
     a2enmod dav && \
     a2enmod dav_fs && \
@@ -96,13 +101,13 @@ RUN dpkg -i /tmp/*.deb && \
     ln -s /data/etc/tls/web.ca.crt /usr/local/share/ca-certificates/fieldtracks/web.ca.crt && \
     ln -s /data/etc/tls/ca.crt /usr/local/share/ca-certificates/fieldtracks/ca.crt
 
-COPY mosquitto.conf /etc/mosquitto/conf.d
-COPY init.sh /usr/local/sbin/init.sh
-COPY vars openssl-easyrsa.cnf /usr/share/easy-rsa/
-COPY apache/vhosts.conf /etc/apache2/sites-available
-COPY apache/fieldtracks.conf /etc/apache2/conf-available/
-COPY apache/check_bearer.json /var/www/api/check_bearer.json
-COPY stoneaggregator.config.ini /usr/local/etc
+COPY configs/mosquitto.conf /etc/mosquitto/conf.d
+COPY configs/init.sh /usr/local/sbin/init.sh
+COPY configs/vars configs/openssl-easyrsa.cnf /usr/share/easy-rsa/
+COPY configs/apache/vhosts.conf /etc/apache2/sites-available
+COPY configs/apache/fieldtracks.conf /etc/apache2/conf-available/
+COPY configs/apache/check_bearer.json /var/www/api/check_bearer.json
+COPY configs/stoneaggregator.config.ini /usr/local/etc
 
 EXPOSE 80/tcp 1883/tcp 8883/tcp 22/tcp 443/tcp
 

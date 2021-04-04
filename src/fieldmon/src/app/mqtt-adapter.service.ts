@@ -42,7 +42,6 @@ export class MqttAdapterService implements OnDestroy {
     }
 
     this.client = mqtt.connect(environment.mqtt_url, {
-      rejectUnauthorized: !environment.isSelfSignedCert,
       transformWsUrl: (url, options, client) => {
         client.options.username = localStorage.getItem('id_token')
         client.options.password = localStorage.getItem('id_token')

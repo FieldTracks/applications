@@ -92,7 +92,7 @@ export class MqttAdapterService implements OnDestroy {
     this.client.publish('flashtool/command', JSON.stringify({
       operation: 'nvs',
       stone: sc}))
-    const s = new Subject<string>()
+    const s = new Subscription()
     s.unsubscribe()
 
   }

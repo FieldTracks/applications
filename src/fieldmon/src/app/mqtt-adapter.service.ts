@@ -11,7 +11,7 @@ import {FlashtoolStatus} from './model/flashtool/flashtool-status';
 import {AggregatedStone} from './model/aggregated/aggregated-stone';
 import {AggregatedGraph, AggregatedGraphLink, AggregatedGraphNode} from './model/aggregated/aggregated-graph';
 import {StoneEvent} from './model/StoneEvent';
-import {AggregatedName } from './model/aggregated/aggregated-name';
+import {AggregatedName} from './model/aggregated/aggregated-name';
 import {FieldmonConfig} from './model/configuration/fieldmon-config';
 import {LoginService} from './login.service';
 import {MqttClient} from "mqtt";
@@ -22,12 +22,13 @@ import {MqttClient} from "mqtt";
 export class MqttAdapterService implements OnDestroy {
   private readonly loginSubscript: Subscription;
   private client: MqttClient;
+
   constructor(private router: Router, private loginService: LoginService) {
-    this.loginSubscript = loginService.token().subscribe( (v) => this.credential_update(v));
+    this.loginSubscript = loginService.token().subscribe((v) => this.credential_update(v));
     this.connect();
   }
 
-  credential_update(token: string) {
+  private credential_update(token: string) {
     this.connect()
   }
 
@@ -37,7 +38,6 @@ export class MqttAdapterService implements OnDestroy {
     } catch (err) {
       // Ignore stop errors - the client is not running in this situations
     }
-
     this.client = mqtt.connect(environment.mqtt_url, {
       transformWsUrl: (url, options, client) => {
         client.options.username = localStorage.getItem('id_token')
@@ -46,42 +46,57 @@ export class MqttAdapterService implements OnDestroy {
       }
     })
     this.client.on('on', () => console.log('MQTT connected'))
-    this.client.on('error', (err) => {console.log('Error in mqtt-adapter',err)})
-    this.client.on('close', () => {console.log('close in mqtt-adapter')})
-    this.client.on('offline', (err) => {console.log('offline in mqtt-adapter',err)})
-    this.client.on('end', (err) => {console.log('end in mqtt-adapter',err)})
-    this.client.on('message',  (topic, payload, packet) => {
+    this.client.on('error', (err) => {
+      console.log('Error in mqtt-adapter', err)
+    })
+    this.client.on('close', () => {
+      console.log('close in mqtt-adapter')
+    })
+    this.client.on('offline', (err) => {
+      console.log('offline in mqtt-adapter', err)
+    })
+    this.client.on('end', (err) => {
+      console.log('end in mqtt-adapter', err)
+    })
+    this.client.on('message', (topic, payload, packet) => {
       this.onMsgRecv(topic, payload, packet)
     })
- }
-
+  }
 
 
   ngOnDestroy(): void {
-       if (this.loginSubscript) {
-         this.loginSubscript.unsubscribe();
-       }
+    if (this.loginSubscript) {
+      this.loginSubscript.unsubscribe();
     }
+    try {
+      this.client.end()
+    } catch (err) {
+      // Ignore errors - just exit
+    }
+  }
 
 
   public publishName(mac: String, name: String): void {
     this.client.publish('NameUpdate', JSON.stringify({
       'mac': mac,
       'name': name,
-      'color': '#ff0000'}))
+      'color': '#ff0000'
+    }))
   }
 
 
   public sendInstallSoftware(sc: StoneConfiguration) {
     this.client.publish('flashtool/command', JSON.stringify({
       operation: 'full_flash',
-      stone: sc}))
+      stone: sc
+    }))
   }
 
   public sendInstallConfiguration(sc: StoneConfiguration) {
     this.client.publish('flashtool/command', JSON.stringify({
       operation: 'nvs',
-      stone: sc}))
+      stone: sc
+    }))
     const s = new Subscription()
     s.unsubscribe()
 
@@ -93,10 +108,9 @@ export class MqttAdapterService implements OnDestroy {
   }
 
 
-
   public aggregatedNamesSubject(): Observable<Map<string, AggregatedName>> {
     return this.observableFor('Aggregated/Names').pipe(
-      map( (jsonObj) => {
+      map((jsonObj) => {
         const parsed = new Map<string, AggregatedName>();
         for (const mac in jsonObj) {
           if (mac) {
@@ -117,7 +131,7 @@ export class MqttAdapterService implements OnDestroy {
       for (const mac in stoneMap) {
         if (mac) {
           nodeMap.set(mac, {id: mac, timestamp: new Date(stoneMap[mac].timestamp)});
-          stoneMap[mac].contacts.forEach( (contact) => {
+          stoneMap[mac].contacts.forEach((contact) => {
             nodeMap.set(contact.mac, {id: contact.mac});
           });
         }
@@ -127,7 +141,7 @@ export class MqttAdapterService implements OnDestroy {
       for (const mac in stoneMap) {
         if (mac) {
           const stone = stoneMap[mac];
-          stone.contacts.forEach( (contact) => {
+          stone.contacts.forEach((contact) => {
             links.push(
               {source: mac, target: contact.mac, rssi: contact.rssi_avg, timestamp: new Date(stone.timestamp)});
           });
@@ -135,7 +149,7 @@ export class MqttAdapterService implements OnDestroy {
       }
 
       // Collect nodeMap and links
-      return  {
+      return {
         links: links,
         nodes: Array.from(nodeMap.values())
       };
@@ -161,61 +175,67 @@ export class MqttAdapterService implements OnDestroy {
   }
 
   private observableFor(topic: string): Observable<any> {
-    const subject  = ManagedSubjectMQTT.subjectForChannel(topic)
-    if(subject.refCount == 1) {
+    const subject = ManagedSubjectMQTT.subjectForChannel(topic)
+    if (subject.refCount == 1) {
       this.client.subscribe(topic)
     }
-    return using( () => {
-        return {unsubscribe: () => {
-          subject.refCount--
-          if(subject.refCount <= 0) {
+    return using(() => {
+        return {
+          unsubscribe: () => {
+            subject.refCount--
+            if (subject.refCount <= 0) {
               this.client.unsubscribe(topic)
               ManagedSubjectMQTT.removeSubject(topic)
             }
           }
-        }},
+        }
+      },
       () => {
         return subject.subject
-    });
+      });
   }
+
   private onMsgRecv(topic: string, payload: Buffer, packet: any) {
     try {
       // Check for zlib compressed data
       const rawData = (payload[0] == 0x78 && payload[1] == 0x9c) ? pako.deflate(payload) : payload.toString();
       const data = JSON.parse(rawData)
-      ManagedSubjectMQTT.subjectsMatchingTopic(topic).forEach( (subj) => {
+      ManagedSubjectMQTT.subjectsMatchingTopic(topic).forEach((subj) => {
         subj.next(data)
       })
 
     } catch (err) {
-      console.log(`Error parsing / delivering to ${topic} ${err}`, [topic,payload,packet])
+      console.log(`Error parsing / delivering to ${topic} ${err}`, [topic, payload, packet])
     }
   }
 }
-class ManagedSubjectMQTT {
-  private static SUBJECTS_BY_CHANNEL = new Map<String,ManagedSubjectMQTT>()
 
-  constructor(public subject: Subject<any>, public refCount: number) { }
+class ManagedSubjectMQTT {
+  private static SUBJECTS_BY_CHANNEL = new Map<String, ManagedSubjectMQTT>()
+
+  constructor(public subject: Subject<any>, public refCount: number) {
+  }
 
   static subjectForChannel(channel: string): ManagedSubjectMQTT {
     let subject = ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.get(channel)
-    if(!subject || subject.refCount < 1) {
-      subject = new ManagedSubjectMQTT(new Subject<any>(),1)
+    if (!subject || subject.refCount < 1) {
+      subject = new ManagedSubjectMQTT(new Subject<any>(), 1)
       ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.set(channel, subject)
     } else {
       subject.refCount++
     }
     return subject
   }
+
   static removeSubject(channel: string) {
     ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.delete(channel)
   }
 
-  static subjectsMatchingTopic(topic: string):Set<Subject<any>> {
+  static subjectsMatchingTopic(topic: string): Set<Subject<any>> {
     const result = new Set<Subject<any>>()
-    ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.forEach( (value,key,map) => {
-      const mangledPrefix = key.replace('#','')
-      if(topic.startsWith(mangledPrefix)) {
+    ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.forEach((value, key, map) => {
+      const mangledPrefix = key.replace('#', '')
+      if (topic.startsWith(mangledPrefix)) {
         result.add(value.subject)
       }
     })

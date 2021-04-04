@@ -3,14 +3,12 @@ import {HttpClient, HttpEvent, HttpHandler, HttpHeaders, HttpInterceptor, HttpRe
 import {Injectable} from '@angular/core';
 import {tap} from 'rxjs/operators';
 import {BehaviorSubject, Observable} from 'rxjs';
-import * as jwt_decode from 'jwt-decode';
+import jwt_decode from "jwt-decode";
 
 @Injectable({
   providedIn: 'root',
 })
 export class LoginService {
-
-
 
   tokenSubject = new BehaviorSubject<string>(localStorage.getItem('id_token') || 'token');
   constructor(private http: HttpClient) {  }
@@ -32,7 +30,7 @@ export class LoginService {
   }
 
   private setSession(token) {
-    const authResult = jwt_decode(token['token']);
+    const authResult: any = jwt_decode(token['token'])
     const expires_epoch = authResult.exp;
     localStorage.setItem('id_token', token['token']);
     localStorage.setItem('expires_at', expires_epoch );
@@ -63,17 +61,13 @@ export class LoginService {
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private loginService: LoginService) { }
-
-  intercept(req: HttpRequest<any>,
-            next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
     const idToken = localStorage.getItem('id_token');
 
     if (idToken) {
       const cloned = req.clone({
-        headers: req.headers.set('Authorization',
-          'Bearer ' + idToken)
+        headers: req.headers.set('Authorization', 'Bearer ' + idToken)
       });
       return next.handle(cloned);
     } else {

@@ -13,7 +13,6 @@ import {AggregatedGraph, AggregatedGraphLink, AggregatedGraphNode} from './model
 import {StoneEvent} from './model/StoneEvent';
 import {AggregatedName } from './model/aggregated/aggregated-name';
 import {FieldmonConfig} from './model/configuration/fieldmon-config';
-import {StoneStatus} from './model/stone-status';
 import {LoginService} from './login.service';
 import {MqttClient} from "mqtt";
 

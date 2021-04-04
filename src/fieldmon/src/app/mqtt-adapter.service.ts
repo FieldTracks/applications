@@ -2,7 +2,7 @@ import * as mqtt from 'mqtt';
 
 import {Injectable, OnDestroy} from '@angular/core';
 import {environment} from './../environments/environment';
-import {ConnectableObservable, Observable, PartialObserver, Subject, Subscription} from 'rxjs';
+import {Observable, Subject, Subscription, using} from 'rxjs';
 import {Router} from '@angular/router';
 import {StoneConfiguration} from './model/StoneConfiguration';
 import {map} from 'rxjs/operators';
@@ -22,10 +22,10 @@ import {MqttClient} from "mqtt";
 export class MqttAdapterService implements OnDestroy {
   private readonly loginSubscript: Subscription;
   private client: MqttClient;
-  private topicsForSubscriptions: Map<String,Subject<any>>;
+  private topicsForSubscriptions: Map<String,[Subject<any>,number]>;
 
   constructor(private router: Router, private loginService: LoginService) {
-    this.topicsForSubscriptions = new Map<String,Subject<any>>()
+    this.topicsForSubscriptions = new Map<String,[Subject<any>,number]>()
     this.loginSubscript = loginService.token().subscribe( (v) => this.credential_update(v));
     this.connect();
   }
@@ -61,7 +61,12 @@ export class MqttAdapterService implements OnDestroy {
   private onMsgRecv(topic: string, payload: any, packet: any) {
     try {
       const data = JSON.parse(payload.toString());
-      this.topicsForSubscriptions.get(topic).next(data)
+      this.topicsForSubscriptions.forEach( (value,key,map) => {
+        const prefix = key.replace('#','')
+        if(topic.startsWith(prefix)) {
+          value[0].next(data)
+        }
+      })
     } catch (err) {
       console.log(`Error parsing / delivering to ${topic} ${err}`, [topic,payload,packet])
     }
@@ -97,23 +102,34 @@ export class MqttAdapterService implements OnDestroy {
 
   }
 
+
   public aggregatedStonesSubject(): Observable<Map<string, AggregatedStone>> {
     return this.observableFor("Aggregated/Stones")
   }
 
-  private observableFor(topic: string): Subject<any> {
-    if(!this.topicsForSubscriptions.has(topic)) {
+
+  private observableFor(topic: string): Observable<any> {
+    const existingSubject = this.topicsForSubscriptions.get(topic)
+    if(!existingSubject || existingSubject[1] == 0) {
       const subject = new Subject<any>()
-      this.topicsForSubscriptions.set(topic,subject)
+      this.topicsForSubscriptions.set(topic,[subject,1])
       this.client.subscribe(topic)
+    } else {
+      const entry = this.topicsForSubscriptions.get(topic)
+      this.topicsForSubscriptions.set(topic, [entry[0],entry[1] +1])
     }
-    return this.topicsForSubscriptions.get(topic)
+    return using( () => {
+        return {unsubscribe: () => {
+            const tE = this.topicsForSubscriptions.get(topic)
+            const subsLeft = tE[1] - 1
+            this.topicsForSubscriptions.set(topic, [tE[0], subsLeft])
+            if(subsLeft <= 0) {
+              this.client.unsubscribe(topic)
+            }
+        }
+        }},
+      () => {return this.topicsForSubscriptions.get(topic)[0]})
   }
-
-  public statusSubject(mac: string): Observable<StoneStatus> {
-    return this.observableFor(`JellingStoneStatus/${mac}`)
-  }
-
   public aggregatedNamesSubject(): Observable<Map<string, AggregatedName>> {
     return this.observableFor('Aggregated/Names').pipe(
       map( (jsonObj) => {

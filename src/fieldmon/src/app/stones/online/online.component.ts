@@ -52,6 +52,7 @@ export class OnlineComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    console.log("Calling subsubscribe")
     this.subscription.unsubscribe();
   }
 

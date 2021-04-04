@@ -8,7 +8,7 @@ This file is part of fieldmon - (C) The Fieldtracks Project
     If not, please contact info@fieldtracks.org
 
  */
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 
 import { StoneOverviewComponent } from './stone-overview.component';
 
@@ -16,7 +16,7 @@ describe('StoneOverviewComponent', () => {
   let component: StoneOverviewComponent;
   let fixture: ComponentFixture<StoneOverviewComponent>;
 
-  beforeEach(async(() => {
+  beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
       declarations: [ StoneOverviewComponent ]
     })

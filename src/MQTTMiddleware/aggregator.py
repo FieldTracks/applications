@@ -45,7 +45,7 @@ class Aggregator:
         self.world = World()
         if self.config.getboolean('Database', 'EnableLogging', fallback=False):
             logging.info('Setting up database...')
-            self.dbs = DBService()
+            self.dbs = DBService(self.config)
         else:
             self.dbs = None
 
@@ -107,8 +107,8 @@ class Aggregator:
         if(time.time() - self.last_stone_update) >= self.update_interval:
             self.last_stone_update = time.time()
             with self.world.get_lock():
-                agg_stones = Aggregator.aggregate_stones(self.world.get_stones())
-                agg_graph = Aggregator.aggregate_graph(self.world.get_stones(), Utils.iso_to_tstamp(data['timestamp']))
+                agg_stones = self.aggregate_stones(self.world.get_stones())
+                agg_graph = self.aggregate_graph(self.world.get_stones(), Utils.iso_to_tstamp(data['timestamp']))
             self.mqttservice.publish_persistent(self.channel_out_stones, agg_stones.encode('utf-8'))
             self.mqttservice.publish_persistent(self.channel_out_graph, agg_graph.encode('utf-8'))
 
@@ -122,7 +122,7 @@ class Aggregator:
 
         # Compose and pin a new message with all names
         with self.world.get_lock():
-            agg_descs = Aggregator.aggregate_descs(self.world.get_descs())
+            agg_descs = self.aggregate_descs(self.world.get_descs())
         self.mqttservice.publish_persistent(self.channel_out_names, agg_descs.encode('utf-8'))
 
     def names_update_callback(self, topic, data):

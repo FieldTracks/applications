@@ -1,4 +1,5 @@
 import * as mqtt from 'mqtt';
+import * as pako from 'pako';
 
 import {Injectable, OnDestroy} from '@angular/core';
 import {environment} from './../environments/environment';
@@ -58,9 +59,12 @@ export class MqttAdapterService implements OnDestroy {
     })
  }
 
-  private onMsgRecv(topic: string, payload: any, packet: any) {
+  private onMsgRecv(topic: string, payload: Buffer, packet: any) {
     try {
-      const data = JSON.parse(payload.toString());
+      // Check for zlib compressed data
+      console.log("MQTT-data", payload)
+      const rawData = (payload[0] == 0x78 && payload[1] == 0x9c) ? pako.deflate(payload) : payload.toString();
+      const data = JSON.parse(rawData)
       this.topicsForSubscriptions.forEach( (value,key,map) => {
         const prefix = key.replace('#','')
         if(topic.startsWith(prefix)) {

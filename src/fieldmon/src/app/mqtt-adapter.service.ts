@@ -22,10 +22,7 @@ import {MqttClient} from "mqtt";
 export class MqttAdapterService implements OnDestroy {
   private readonly loginSubscript: Subscription;
   private client: MqttClient;
-  private topicsForSubscriptions: Map<String,[Subject<any>,number]>;
-
   constructor(private router: Router, private loginService: LoginService) {
-    this.topicsForSubscriptions = new Map<String,[Subject<any>,number]>()
     this.loginSubscript = loginService.token().subscribe( (v) => this.credential_update(v));
     this.connect();
   }
@@ -58,22 +55,7 @@ export class MqttAdapterService implements OnDestroy {
     })
  }
 
-  private onMsgRecv(topic: string, payload: Buffer, packet: any) {
-    try {
-      // Check for zlib compressed data
-      console.log("MQTT-data", payload)
-      const rawData = (payload[0] == 0x78 && payload[1] == 0x9c) ? pako.deflate(payload) : payload.toString();
-      const data = JSON.parse(rawData)
-      this.topicsForSubscriptions.forEach( (value,key,map) => {
-        const prefix = key.replace('#','')
-        if(topic.startsWith(prefix)) {
-          value[0].next(data)
-        }
-      })
-    } catch (err) {
-      console.log(`Error parsing / delivering to ${topic} ${err}`, [topic,payload,packet])
-    }
-  }
+
 
   ngOnDestroy(): void {
        if (this.loginSubscript) {
@@ -111,28 +93,7 @@ export class MqttAdapterService implements OnDestroy {
   }
 
 
-  private observableFor(topic: string): Observable<any> {
-    const existingSubject = this.topicsForSubscriptions.get(topic)
-    if(!existingSubject || existingSubject[1] == 0) {
-      const subject = new Subject<any>()
-      this.topicsForSubscriptions.set(topic,[subject,1])
-      this.client.subscribe(topic)
-    } else {
-      const entry = this.topicsForSubscriptions.get(topic)
-      this.topicsForSubscriptions.set(topic, [entry[0],entry[1] +1])
-    }
-    return using( () => {
-        return {unsubscribe: () => {
-            const tE = this.topicsForSubscriptions.get(topic)
-            const subsLeft = tE[1] - 1
-            this.topicsForSubscriptions.set(topic, [tE[0], subsLeft])
-            if(subsLeft <= 0) {
-              this.client.unsubscribe(topic)
-            }
-        }
-        }},
-      () => {return this.topicsForSubscriptions.get(topic)[0]})
-  }
+
   public aggregatedNamesSubject(): Observable<Map<string, AggregatedName>> {
     return this.observableFor('Aggregated/Names').pipe(
       map( (jsonObj) => {
@@ -199,4 +160,65 @@ export class MqttAdapterService implements OnDestroy {
     this.client.publish('fieldmon/config', JSON.stringify(config), {qos: 1, retain: true})
   }
 
+  private observableFor(topic: string): Observable<any> {
+    const subject  = ManagedSubjectMQTT.subjectForChannel(topic)
+    if(subject.refCount == 1) {
+      this.client.subscribe(topic)
+    }
+    return using( () => {
+        return {unsubscribe: () => {
+          subject.refCount--
+          if(subject.refCount <= 0) {
+              this.client.unsubscribe(topic)
+              ManagedSubjectMQTT.removeSubject(topic)
+            }
+          }
+        }},
+      () => {
+        return subject.subject
+    });
+  }
+  private onMsgRecv(topic: string, payload: Buffer, packet: any) {
+    try {
+      // Check for zlib compressed data
+      const rawData = (payload[0] == 0x78 && payload[1] == 0x9c) ? pako.deflate(payload) : payload.toString();
+      const data = JSON.parse(rawData)
+      ManagedSubjectMQTT.subjectsMatchingTopic(topic).forEach( (subj) => {
+        subj.next(data)
+      })
+
+    } catch (err) {
+      console.log(`Error parsing / delivering to ${topic} ${err}`, [topic,payload,packet])
+    }
+  }
+}
+class ManagedSubjectMQTT {
+  private static SUBJECTS_BY_CHANNEL = new Map<String,ManagedSubjectMQTT>()
+
+  constructor(public subject: Subject<any>, public refCount: number) { }
+
+  static subjectForChannel(channel: string): ManagedSubjectMQTT {
+    let subject = ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.get(channel)
+    if(!subject || subject.refCount < 1) {
+      subject = new ManagedSubjectMQTT(new Subject<any>(),1)
+      ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.set(channel, subject)
+    } else {
+      subject.refCount++
+    }
+    return subject
+  }
+  static removeSubject(channel: string) {
+    ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.delete(channel)
+  }
+
+  static subjectsMatchingTopic(topic: string):Set<Subject<any>> {
+    const result = new Set<Subject<any>>()
+    ManagedSubjectMQTT.SUBJECTS_BY_CHANNEL.forEach( (value,key,map) => {
+      const mangledPrefix = key.replace('#','')
+      if(topic.startsWith(mangledPrefix)) {
+        result.add(value.subject)
+      }
+    })
+    return result
+  }
 }

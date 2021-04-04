@@ -1,4 +1,3 @@
-import { MqttService } from 'ngx-mqtt';
 /*
 This file is part of fieldmon - (C) The Fieldtracks Project
 

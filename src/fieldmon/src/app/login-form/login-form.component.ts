@@ -8,13 +8,8 @@ This file is part of fieldmon - (C) The Fieldtracks Project
     If not, please contact info@fieldtracks.org
 
  */
-import {Component, OnDestroy, OnInit} from '@angular/core';
-
-import {MqttAdapterService} from '../mqtt-adapter.service';
-import {environment} from '../../environments/environment';
+import {Component,OnInit} from '@angular/core';
 import {Router} from '@angular/router';
-import {BehaviorSubject, Subscription} from 'rxjs';
-import {MqttConnectionState} from 'ngx-mqtt';
 import {HeaderBarService} from '../header-bar.service';
 import {LoginService} from '../login.service';
 

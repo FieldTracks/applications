@@ -7,9 +7,6 @@ services:
     hostname: local-dev.fieldtracks.org
     ports:
     - 127.0.0.1:8485:80
-    - 127.0.0.1:8443:443
-    - 127.0.0.1:2225:22
-    - 127.0.0.1:2883:1883
     - 127.0.0.1:8883:8883
     volumes:
       - ./data:/data
@@ -18,29 +15,27 @@ services:
   # local-dev.fieldtracks.org points to 127.0.0.1 - the intentian is to ease the effort for setting up a local
   # development environment
   # Refer to the docs of the base image (https://github.com/matrix-org/docker-dehydrated), when using different domains or providers
-  dehydrated:
-    image:  matrixdotorg/dehydrated:latest
-    container_name: ft-dehydrated
-    hostname: local-dev.fieldtracks.org
-    command: "bash -c '. /run/secrets/henet_login &&  pip3 install dns-lexicon[henet] && /bin/s6-svscan /etc/s6.d'"
-    volumes:
-      - ./data/dehydrated:/data
-    environment:
-      - DEHYDRATED_GENERATE_CONFIG=yes
-      - DEHYDRATED_ACCEPT_TERMS=yes
-      - DEHYDRATED_EMAIL=info@fieldtracks.org
-      - DEHYDRATED_CA=https://acme-v02.api.letsencrypt.org/directory # Mind: This is STAGING not production
-      - DEHYDRATED_CHALLENGE=dns-01
-      - PROVIDER=henet
-      #- LEXICON_HENET_USERNAME= # Provided by henet_login.source when sources
-      #- LEXICON_HENET_PASSWORD= # Provided by henet_login.source when sources
-      - DEHYDRATED_HOOK="/usr/local/bin/lexicon-hook"
-      - DEHYDRATED_DOMAIN=local-dev.fieldtracks.org
-    secrets:
-      - henet_login
+  #dehydrated:
+#    image:  matrixdotorg/dehydrated:latest
+#    container_name: ft-dehydrated
+#    hostname: local-dev.fieldtracks.org
+#    command: "bash -c '. /run/secrets/henet_login &&  pip3 install dns-lexicon[henet] && /bin/s6-svscan /etc/s6.d'"
+#    volumes:
+#      - ./data/dehydrated:/data
+#    environment:
+#      - DEHYDRATED_GENERATE_CONFIG=yes
+#      - DEHYDRATED_ACCEPT_TERMS=yes
+#      - DEHYDRATED_EMAIL=info@fieldtracks.org
+#      - DEHYDRATED_CA=https://acme-v02.api.letsencrypt.org/directory # Mind: This is STAGING not production
+#      - DEHYDRATED_CHALLENGE=dns-01
+#      - PROVIDER=henet
+#      #- LEXICON_HENET_USERNAME= # Provided by henet_login.source when sources
+#      #- LEXICON_HENET_PASSWORD= # Provided by henet_login.source when sources
+#      - DEHYDRATED_HOOK="/usr/local/bin/lexicon-hook"
+#      - DEHYDRATED_DOMAIN=local-dev.fieldtracks.org
+#    secrets:
+#      - henet_login
 
-secrets:
-  henet_login:
-    file: ./secrets/henet_login.source
-
-
+#secrets:
+#  henet_login:
+#    file: ./secrets/henet_login.source

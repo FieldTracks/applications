@@ -7,7 +7,7 @@
 if [ ! -d /data/etc/ ]; then
   echo "Create data directory"
 	mkdir -p /data/etc
-fi	
+fi
 
 # etc/tls contains symlinks the the certificate used by this server
 # These certificates are used by mqtt (mosquitto) and https (apache)
@@ -41,20 +41,6 @@ if [ ! -f /data/etc/easy-rsa/pki/private/$(hostname).key ]; then
   chmod 755 /data/etc/easy-rsa/pki/
 fi
 
-# By Default, certificates for apache and mqtt/websocket link to the local ones
-# However, this can be changed by the user
-if [ ! -f /data/etc/tls/web.ca.crt ]; then
-  ln -s ca.crt /data/etc/tls/web.ca.crt
-fi
-
-if [ ! -f /data/etc/tls/web.crt ]; then
-  ln -s local.crt /data/etc/tls/web.crt
-fi
-
-if [ ! -f /data/etc/tls/web.key ]; then
-  ln -s local.key /data/etc/tls/web.key
-fi
-
 # Stones authenticate not using mqtt. They provide a simple password
 # In general, we don't expect people messing with stones; this is outside the threat-model
 # However, as we're distributing plain text password for use in esp-idf, it could be helpful
@@ -80,7 +66,7 @@ if [ ! -d /data/etc/apache2 ]; then
   mkdir /data/etc/apache2
   cp /etc/apache2/sites-available/vhosts.conf /data/etc/apache2
 
-  echo "Generate cryptographic data for Apache2"
+  echo "Generate cryptographic data for Apache2 / JWT"
   openssl ecparam -name secp256k1 -genkey -noout -out /data/etc/apache2/ec-priv.pem
   openssl ec -in /data/etc/apache2/ec-priv.pem -pubout -out /data/etc/apache2/ec-pub.pem
   chown www-data:www-data /data/etc/apache2/*.pem
@@ -117,4 +103,3 @@ service apache2 start
 service mosquitto start
 service ssh start
 /usr/local/bin/stoneaggregator /usr/local/etc/stoneaggregator.config.ini
-

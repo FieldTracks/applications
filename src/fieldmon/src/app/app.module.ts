@@ -18,8 +18,7 @@ import { LoginFormComponent } from './login-form/login-form.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MaterialModule } from './material.module';
-import { MqttModule, } from 'ngx-mqtt';
-import { MQTT_SERVICE_OPTIONS, MqttAdapterService } from './mqtt-adapter.service';
+import { MqttAdapterService } from './mqtt-adapter.service';
 import { StoneOverviewComponent } from './stone-overview/stone-overview.component';
 import { SensorContactsComponent } from './sensor-contacts/sensor-contacts.component';
 import { GraphComponent } from './graph/graph.component';
@@ -33,10 +32,6 @@ import {FileUploadDialogComponent} from './graph/file-upload-dialog.component';
 import {HTTP_INTERCEPTORS, HttpClientModule} from '@angular/common/http';
 import {SettingsDialogComponent} from './graph/settings-dialog/settings-dialog.component';
 import { D3WidgetComponent } from './graph/d3-widget/d3-widget.component';
-import {GraphConfigService} from './graph-config.service';
-import {registerLocaleData} from '@angular/common';
-
-import localeDe from '@angular/common/locales/de';
 import { DevIconComponent } from './shared/dev-icon/dev-icon.component';
 import {AuthInterceptor} from './login.service';
 
@@ -69,7 +64,6 @@ import {AuthInterceptor} from './login.service';
     FormsModule,
     HttpClientModule,
     ReactiveFormsModule,
-    MqttModule.forRoot(MQTT_SERVICE_OPTIONS)
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }

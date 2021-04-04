@@ -1,54 +1,71 @@
+import * as mqtt from 'mqtt';
+
 import {Injectable, OnDestroy} from '@angular/core';
-import {IMqttMessage, IMqttServiceOptions, MqttConnectionState, MqttService} from 'ngx-mqtt';
 import {environment} from './../environments/environment';
-import {BehaviorSubject, Observable, Subject, Subscription} from 'rxjs';
+import {ConnectableObservable, Observable, PartialObserver, Subject, Subscription} from 'rxjs';
 import {Router} from '@angular/router';
 import {StoneConfiguration} from './model/StoneConfiguration';
-import {filter, map} from 'rxjs/operators';
+import {map} from 'rxjs/operators';
 import {FlashtoolStatus} from './model/flashtool/flashtool-status';
-import {AggregatedStone, AggregatedStoneSensorContact} from './model/aggregated/aggregated-stone';
+import {AggregatedStone} from './model/aggregated/aggregated-stone';
 import {AggregatedGraph, AggregatedGraphLink, AggregatedGraphNode} from './model/aggregated/aggregated-graph';
 import {StoneEvent} from './model/StoneEvent';
-import { AggregatedName } from './model/aggregated/aggregated-name';
-import {AggregatedDevice} from './model/aggregated/aggregated-devices';
+import {AggregatedName } from './model/aggregated/aggregated-name';
 import {FieldmonConfig} from './model/configuration/fieldmon-config';
 import {StoneStatus} from './model/stone-status';
 import {LoginService} from './login.service';
+import {MqttClient} from "mqtt";
 
-export const MQTT_SERVICE_OPTIONS: IMqttServiceOptions = {
-  hostname: environment.mqtt_broker,
-  port: environment.mqtt_port,
-  path: "",
-  protocol: 'wss',
-  connectOnCreate: false,
-};
 @Injectable({
   providedIn: 'root',
 })
 export class MqttAdapterService implements OnDestroy {
-
-  private mqttService: MqttService = new MqttService(MQTT_SERVICE_OPTIONS);
-  private loginSubscript: Subscription;
+  private readonly loginSubscript: Subscription;
+  private client: MqttClient;
+  private topicsForSubscriptions: Map<String,Subject<any>>;
 
   constructor(private router: Router, private loginService: LoginService) {
-    MQTT_SERVICE_OPTIONS.password = 'jwt';
-    MQTT_SERVICE_OPTIONS.username = loginService.tokenSubject.getValue();
+    this.topicsForSubscriptions = new Map<String,Subject<any>>()
     this.loginSubscript = loginService.token().subscribe( (v) => this.credential_update(v));
+    this.connect();
   }
 
   credential_update(token: string) {
-    MQTT_SERVICE_OPTIONS.username = token;
+    this.connect()
+  }
+
+  private connect(): void {
     try {
-      this.mqttService.disconnect();
-    } catch (e) {
-      // Ingore errors when disconnecting
+      this.client.end()
+    } catch (err) {
+      // Ignore stop errors - the client is not running in this situations
     }
 
-    finally {
-      this.mqttService.connect(MQTT_SERVICE_OPTIONS);
+    this.client = mqtt.connect(environment.mqtt_url, {
+      rejectUnauthorized: !environment.isSelfSignedCert,
+      transformWsUrl: (url, options, client) => {
+        client.options.username = localStorage.getItem('id_token')
+        client.options.password = localStorage.getItem('id_token')
+        return url;
+      }
+    })
+    this.client.on('on', () => console.log('MQTT connected'))
+    this.client.on('error', (err) => {console.log('Error in mqtt-adapter',err)})
+    this.client.on('close', () => {console.log('close in mqtt-adapter')})
+    this.client.on('offline', (err) => {console.log('offline in mqtt-adapter',err)})
+    this.client.on('end', (err) => {console.log('end in mqtt-adapter',err)})
+    this.client.on('message',  (topic, payload, packet) => {
+      this.onMsgRecv(topic, payload, packet)
+    })
+ }
 
+  private onMsgRecv(topic: string, payload: any, packet: any) {
+    try {
+      const data = JSON.parse(payload.toString());
+      this.topicsForSubscriptions.get(topic).next(data)
+    } catch (err) {
+      console.log(`Error parsing / delivering to ${topic} ${err}`, [topic,payload,packet])
     }
-
   }
 
   ngOnDestroy(): void {
@@ -59,61 +76,57 @@ export class MqttAdapterService implements OnDestroy {
 
 
   public publishName(mac: String, name: String): void {
-    this.mqttService.publish('NameUpdate', JSON.stringify({
+    this.client.publish('NameUpdate', JSON.stringify({
       'mac': mac,
       'name': name,
       'color': '#ff0000'}))
-      .subscribe().unsubscribe();
   }
 
-  public getSubscription(channel: string, handle: (message: IMqttMessage) => void): Subscription {
-    return this.mqttService.observe(channel).subscribe(handle);
-  }
 
   public sendInstallSoftware(sc: StoneConfiguration) {
-    const sub = this.mqttService.publish('flashtool/command', JSON.stringify({
+    this.client.publish('flashtool/command', JSON.stringify({
       operation: 'full_flash',
-      stone: sc
-    })).subscribe().unsubscribe();
+      stone: sc}))
   }
 
   public sendInstallConfiguration(sc: StoneConfiguration) {
-    this.mqttService.publish('flashtool/command', JSON.stringify({
+    this.client.publish('flashtool/command', JSON.stringify({
       operation: 'nvs',
-      stone: sc
-    })).subscribe().unsubscribe();
+      stone: sc}))
+    const s = new Subject<string>()
+    s.unsubscribe()
+
   }
 
   public aggregatedStonesSubject(): Observable<Map<string, AggregatedStone>> {
-    return this.mqttService.observe('Aggregated/Stones').pipe(map(
-      (message: IMqttMessage) => {
-        return JSON.parse(message.payload.toString());
-      }
-    ));
+    return this.observableFor("Aggregated/Stones")
+  }
+
+  private observableFor(topic: string): Subject<any> {
+    if(!this.topicsForSubscriptions.has(topic)) {
+      const subject = new Subject<any>()
+      this.topicsForSubscriptions.set(topic,subject)
+      this.client.subscribe(topic)
+    }
+    return this.topicsForSubscriptions.get(topic)
   }
 
   public statusSubject(mac: string): Observable<StoneStatus> {
-    console.log(`Topic: JellingStoneStatus/${mac}`);
-    return this.mqttService.observe(`JellingStoneStatus/${mac}`).pipe(map(
-      (message: IMqttMessage) => {
-        return JSON.parse(message.payload.toString());
-      }
-    ));
+    return this.observableFor(`JellingStoneStatus/${mac}`)
   }
 
   public aggregatedNamesSubject(): Observable<Map<string, AggregatedName>> {
-    return this.mqttService.observe('Aggregated/Names').pipe(map(
-      (message: IMqttMessage) => {
+    return this.observableFor('Aggregated/Names').pipe(
+      map( (jsonObj) => {
         const parsed = new Map<string, AggregatedName>();
-        const result = JSON.parse(message.payload.toString());
-        for (const mac in result) {
+        for (const mac in jsonObj) {
           if (mac) {
-            parsed.set(mac, result[mac]);
+            parsed.set(mac, jsonObj[mac]);
           }
         }
         return parsed;
-      }
-    ));
+      })
+    )
   }
 
   public aggregatedGraphSubject(): Observable<AggregatedGraph> {
@@ -150,41 +163,22 @@ export class MqttAdapterService implements OnDestroy {
     }));
   }
 
-  public stoneEventSubject(): Observable<StoneEvent> {
-    return this.mqttService.observe('JellingStone/#').pipe(map(
-      (message: IMqttMessage) => {
-        return {...JSON.parse(message.payload.toString()), mac: message.topic.replace('JellingStone/', '')};
-      }
-    ));
 
+  public stoneEventSubject(): Observable<StoneEvent> {
+    return this.observableFor('JellingStone/#')
   }
 
   public flashToolSubject(): Observable<FlashtoolStatus> {
-    return this.mqttService.observe('flashtool/status/#').pipe(filter(
-      (message: IMqttMessage) => {
-        return message.payload.toString() !== '';
-      }
-    )).pipe(map(
-      (message: IMqttMessage) => {
-        return JSON.parse(message.payload.toString());
-      }
-    ));
-
+    return this.observableFor('flashtool/status/#')
   }
 
 
   public fieldmonSubject(): Observable<FieldmonConfig> {
-    return this.mqttService.observe('fieldmon/config').pipe(map(
-      (message: IMqttMessage) => {
-        return JSON.parse(message.payload.toString());
-      }
-    ));
+    return this.observableFor('fieldmon/config')
   }
 
   public publishFieldmonConfig(config: FieldmonConfig): void {
-    this.mqttService.publish('fieldmon/config', JSON.stringify(config), {qos: 1, retain: true})
-      .subscribe().unsubscribe();
+    this.client.publish('fieldmon/config', JSON.stringify(config), {qos: 1, retain: true})
   }
-
 
 }

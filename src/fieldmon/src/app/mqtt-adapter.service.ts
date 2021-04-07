@@ -3,7 +3,7 @@ import * as pako from 'pako';
 
 import {Injectable, OnDestroy} from '@angular/core';
 import {environment} from './../environments/environment';
-import {Observable, Subject, Subscription, using} from 'rxjs';
+import {Observable, Subject, Subscription, timer, using} from 'rxjs';
 import {Router} from '@angular/router';
 import {StoneConfiguration} from './model/StoneConfiguration';
 import {map} from 'rxjs/operators';
@@ -15,6 +15,7 @@ import {AggregatedName} from './model/aggregated/aggregated-name';
 import {FieldmonConfig} from './model/configuration/fieldmon-config';
 import {LoginService} from './login.service';
 import {MqttClient} from "mqtt";
+import {StaticGraphData} from "./StaticGraphData";
 
 @Injectable({
   providedIn: 'root',
@@ -156,6 +157,11 @@ export class MqttAdapterService implements OnDestroy {
     }));
   }
 
+  public graphSubject(): Observable<any> {
+    return timer(4000,4000).pipe(map( () => {
+        return StaticGraphData.data
+    }))
+  }
 
   public stoneEventSubject(): Observable<StoneEvent> {
     return this.observableFor('JellingStone/#')
@@ -164,7 +170,6 @@ export class MqttAdapterService implements OnDestroy {
   public flashToolSubject(): Observable<FlashtoolStatus> {
     return this.observableFor('flashtool/status/#')
   }
-
 
   public fieldmonSubject(): Observable<FieldmonConfig> {
     return this.observableFor('fieldmon/config')

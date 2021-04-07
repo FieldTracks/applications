@@ -23,11 +23,10 @@ export class ForceGraph {
     this.ctx = canvas.getContext('2d')
     this.force = forceSimulation<D3Node,D3Link>()
       .force('charge', forceManyBody())
-      .force('charge', forceManyBody())
-      .force('x', forceX().strength(0.02))
-      .force('y', forceY().strength(0.02))
+      .force('charge', forceManyBody().strength(-0.125))
       .on('tick', function () { sim.redraw()})
-      .alphaDecay(0.025);
+      .alphaDecay(0.05)
+      .alphaTarget(0)
   }
   updateData(data: AggregatedGraph) {
     console.log("Got data", data)
@@ -58,8 +57,8 @@ export class ForceGraph {
     })
     this.force = this.force
       .nodes(this.nodes)
-      .force('link', forceLink<D3Node,D3Link>(this.links).id(d => d.id))
-      .alpha(0.25)
+      .force('link', forceLink().distance(() => 50)
+        .strength(1))
       .restart()
   }
 

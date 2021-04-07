@@ -1,0 +1,15 @@
+[mqtt]
+
+# Connection information
+# Standard ports are 1883 without TLS or 8883 for TLS connections
+hostname = "127.0.0.1:2883"
+
+# Using TLS requires a path to a valid CA Certificate file
+# When insecure is turned on, the certificate's hostname won't be checked
+use_tls = false
+ca_cert = "server.pem"
+insecure = false
+
+# Credentials for the MQTT broker
+username = "stone"
+password = "CdUH3EP9"

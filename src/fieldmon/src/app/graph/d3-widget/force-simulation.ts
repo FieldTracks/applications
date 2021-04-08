@@ -1,7 +1,8 @@
 import {
+  forceCenter,
   forceLink,
   forceManyBody,
-  forceSimulation, forceX, forceY,
+  forceSimulation,
   Simulation,
   SimulationLinkDatum,
   SimulationNodeDatum
@@ -18,16 +19,15 @@ export class ForceGraph {
   private force: Simulation<D3Node,D3Link>
   private readonly ctx: CanvasRenderingContext2D;
 
-  constructor(private canvas: HTMLCanvasElement) {
+  constructor(private canvas: HTMLCanvasElement, private context2d: CanvasRenderingContext2D) {
     const sim = this
-    this.ctx = canvas.getContext('2d')
+    this.ctx = context2d
     this.force = forceSimulation<D3Node,D3Link>()
       .force('charge', forceManyBody())
-      .force('charge', forceManyBody().strength(-0.125))
-      .on('tick', function () { sim.redraw()})
-      .alphaDecay(0.05)
-      .alphaTarget(0)
+      .force('center', forceCenter(this.canvas.width / 2, this.canvas.height / 2).strength(1))
+      .on('tick', function () { if(sim.ctx) sim.redraw()})
   }
+
   updateData(data: AggregatedGraph) {
     console.log("Got data", data)
     this.force.stop()
@@ -52,26 +52,25 @@ export class ForceGraph {
       return {
         source: this.nodeMap.get(dataLink.source),
         target: this.nodeMap.get(dataLink.target),
-        value: 0.4
+        value: 1
       }
     })
     this.force = this.force
+      .alpha(1)
       .nodes(this.nodes)
-      .force('link', forceLink().distance(() => 50)
-        .strength(1))
+      .force('link', forceLink<D3Node,D3Link>(this.links).id( d => d.id))
       .restart()
   }
 
-  redraw(): void {
-    console.log("Redraw")
-    if(!this.ctx) {
-      console.log("init")
-      return // Nothing to be done. Still initializing
-    }
-    this.ctx.save()
-    this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height)
+  drawNodesAndLinks(): void {
     this.links.forEach(l=> {this.drawLink(l)})
     this.nodes.forEach(n => {this.drawNode(n)})
+  }
+
+  private redraw(): void {
+    this.ctx.save()
+    this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height)
+    this.drawNodesAndLinks()
     this.ctx.restore()
   }
 
@@ -99,6 +98,7 @@ export class ForceGraph {
     this.ctx.globalAlpha = 1
 
   }
+
 }
 export interface D3Link extends SimulationLinkDatum<D3Node>{
   source: D3Node;

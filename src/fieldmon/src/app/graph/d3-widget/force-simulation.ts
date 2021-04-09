@@ -17,15 +17,12 @@ export class ForceGraph {
   private nodes: D3Node[] = []
 
   private force: Simulation<D3Node,D3Link>
-  private readonly ctx: CanvasRenderingContext2D;
 
-  constructor(private canvas: HTMLCanvasElement, private context2d: CanvasRenderingContext2D) {
-    const sim = this
-    this.ctx = context2d
+  constructor(private canvas: HTMLCanvasElement, private repaintCb: () => void) {
     this.force = forceSimulation<D3Node,D3Link>()
       .force('charge', forceManyBody())
       .force('center', forceCenter(this.canvas.width / 2, this.canvas.height / 2).strength(1))
-      .on('tick', function () { if(sim.ctx) sim.redraw()})
+      .on('tick', function () { repaintCb()})
   }
 
   updateData(data: AggregatedGraph) {
@@ -62,43 +59,36 @@ export class ForceGraph {
       .restart()
   }
 
-  drawNodesAndLinks(): void {
-    this.links.forEach(l=> {this.drawLink(l)})
-    this.nodes.forEach(n => {this.drawNode(n)})
-  }
-
-  private redraw(): void {
-    this.ctx.save()
-    this.ctx.clearRect(0,0,this.canvas.width, this.canvas.height)
-    this.drawNodesAndLinks()
-    this.ctx.restore()
-  }
-
-  drawNode(node: D3Node): void {
+  private drawNode(node: D3Node, ctx: CanvasRenderingContext2D): void {
     const fillColor = '#F00'
-    this.ctx.beginPath()
-    this.ctx.arc(node.x, node.y, 8,0, 2*Math.PI)
-    this.ctx.fillStyle = fillColor
-    this.ctx.fill()
+    ctx.beginPath()
+    ctx.arc(node.x, node.y, 8,0, 2*Math.PI)
+    ctx.fillStyle = fillColor
+    ctx.fill()
   }
 
-  drawLink(link: D3Link): void {
-    const gradient = this.ctx.createLinearGradient(link.source.x, link.source.y, link.target.x, link.target.y)
+  private drawLink(link: D3Link, ctx: CanvasRenderingContext2D): void {
+    const gradient = ctx.createLinearGradient(link.source.x, link.source.y, link.target.x, link.target.y)
     // TODO: define nice gradient for stones and contacts
     gradient.addColorStop(0.45, '#000')
     gradient.addColorStop(0.55, '#000')
 
-    this.ctx.beginPath()
-    this.ctx.moveTo(link.source.x, link.source.y)
-    this.ctx.lineTo(link.target.x, link.target.y)
-    this.ctx.strokeStyle = gradient
-    this.ctx.globalAlpha = 0.2
-    this.ctx.lineWidth = 1.5
-    this.ctx.stroke()
-    this.ctx.globalAlpha = 1
+    ctx.beginPath()
+    ctx.moveTo(link.source.x, link.source.y)
+    ctx.lineTo(link.target.x, link.target.y)
+    ctx.strokeStyle = gradient
+    ctx.globalAlpha = 0.2
+    ctx.lineWidth = 1.5
+    ctx.stroke()
+    ctx.globalAlpha = 1
 
   }
 
+  paint(context2d: CanvasRenderingContext2D) {
+    this.links.forEach(l=> {this.drawLink(l,context2d)})
+    this.nodes.forEach(n => {this.drawNode(n,context2d)})
+
+  }
 }
 export interface D3Link extends SimulationLinkDatum<D3Node>{
   source: D3Node;

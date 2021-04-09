@@ -19,9 +19,21 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
   private nativeCanvas: HTMLCanvasElement;
   private context2d: CanvasRenderingContext2D;
 
-
+  private transform: ZoomTransform = zoomIdentity
 
   constructor(private mqttService: MqttAdapterService) { }
+
+  // Called to trigger a repaint
+  repaint() {
+    this.context2d.save()
+    this.context2d.fillStyle = '#000'
+    this.context2d.clearRect(0,0,this.nativeCanvas.width, this.nativeCanvas.height)
+    this.context2d.translate(this.transform.x, this.transform.y)
+    this.context2d.scale(this.transform.k, this.transform.k)
+    // For now, solely the force-graph needs to be painted
+    this.forceGraph.paint(this.context2d)
+    this.context2d.restore()
+  }
 
   ngOnDestroy(): void {
     if(this.graphSubscription) {
@@ -35,24 +47,16 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
     this.context2d = this.nativeCanvas.getContext("2d")
 
 
-    this.forceGraph = new ForceGraph(this.nativeCanvas, this.context2d)
+    this.forceGraph = new ForceGraph(this.nativeCanvas, () => this.repaint())
     select(this.nativeCanvas).call(zoom()
       .scaleExtent([1/10,8])
-      .on("zoom", function(event) {that.zoomed(event.transform)}))
-    this.zoomed(zoomIdentity)
+      .on("zoom", function(event) {
+        that.transform = event.transform
+        that.repaint()
+      }))
     this.graphSubscription = this.mqttService.aggregatedGraphSubject().subscribe( (graph) => {
       this.forceGraph.updateData(graph)
     })
   }
 
-  private zoomed(transform: ZoomTransform) {
-    console.log("Zooming", transform)
-    this.context2d.save()
-    this.context2d.fillStyle = '#000'
-    this.context2d.clearRect(0,0,this.nativeCanvas.width, this.nativeCanvas.height)
-    this.context2d.translate(transform.x, transform.y)
-    this.context2d.scale(transform.k, transform.k)
-    this.forceGraph.drawNodesAndLinks()
-    this.context2d.restore()
-  }
 }

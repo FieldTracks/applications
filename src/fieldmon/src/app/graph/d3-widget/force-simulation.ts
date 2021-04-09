@@ -10,6 +10,7 @@ import {
 import {AggregatedGraph} from "../../model/aggregated/aggregated-graph";
 import {DrawUtils} from "./utils";
 import {D3Link, D3Node, ForceGraphModel} from "./model";
+import {AggregatedGraphNew} from "../../AggregatedGraphNew";
 
 // Controls the D3 force simulation
 // This class adapts all d3-centric functionality excepts painting
@@ -31,7 +32,7 @@ export class ForceGraph {
   }
 
   // Update Data: To be called for updating the data in the simulation
-  updateData(data: AggregatedGraph) {
+  updateData(data: AggregatedGraphNew) {
     console.log("Got data", data)
     this.force.stop()
     this.model.updateData(data)

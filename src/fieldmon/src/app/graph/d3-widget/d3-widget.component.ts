@@ -54,7 +54,7 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
         that.transform = event.transform
         that.repaint()
       }))
-    this.graphSubscription = this.mqttService.aggregatedGraphSubject().subscribe( (graph) => {
+    this.graphSubscription = this.mqttService.graphSubject().subscribe( (graph) => {
       this.forceGraph.updateData(graph)
     })
   }

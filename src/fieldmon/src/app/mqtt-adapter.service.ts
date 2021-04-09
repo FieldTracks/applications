@@ -15,7 +15,7 @@ import {AggregatedName} from './model/aggregated/aggregated-name';
 import {FieldmonConfig} from './model/configuration/fieldmon-config';
 import {LoginService} from './login.service';
 import {MqttClient} from "mqtt";
-import {StaticGraphData} from "./StaticGraphData";
+import {AggregatedGraphNew, AggregatedGraphNewGenerator} from "./AggregatedGraphNew";
 
 @Injectable({
   providedIn: 'root',
@@ -157,9 +157,13 @@ export class MqttAdapterService implements OnDestroy {
     }));
   }
 
-  public graphSubject(): Observable<any> {
-    return timer(4000,4000).pipe(map( () => {
-        return StaticGraphData.data
+  public graphSubject(): Observable<AggregatedGraphNew> {
+    const generator = new AggregatedGraphNewGenerator()
+
+    return timer(0,1000).pipe(map( (val) => {
+        const gg = generator.graphForIteration(val)
+        console.log("Got",gg)
+        return gg
     }))
   }
 

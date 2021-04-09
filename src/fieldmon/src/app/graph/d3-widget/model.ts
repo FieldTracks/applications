@@ -1,5 +1,6 @@
 import {AggregatedGraph} from "../../model/aggregated/aggregated-graph";
 import {SimulationLinkDatum, SimulationNodeDatum} from "d3-force";
+import {AggregatedGraphNew} from "../../AggregatedGraphNew";
 
 export interface D3Node extends SimulationNodeDatum{
   name: string;
@@ -9,6 +10,7 @@ export interface D3Node extends SimulationNodeDatum{
   fx?: number;
   fy?: number;
   fixed?: boolean;
+  stone?: boolean
 }
 export interface D3Link extends SimulationLinkDatum<D3Node>{
   source: D3Node;
@@ -22,16 +24,19 @@ export class ForceGraphModel {
   public nodes: D3Node[] = []
 
 
-  updateData(data: AggregatedGraph) {
+  updateData(data: AggregatedGraphNew) {
     const nonNeededNodes = new Set(this.nodes.map(n => n.id))
+    let count = 0
     this.nodes = data.nodes.map((dataNode) => {
       const idStr = dataNode.id
       nonNeededNodes.delete(idStr)
       let node = this.nodeMap.get(idStr)
       if (!node) {
+        console.log("Local?", dataNode.localstone)
         node = {
           name: dataNode.id,
           id: dataNode.id,
+          stone: dataNode.localstone,
         }
         this.nodeMap.set(idStr, node)
       }
@@ -45,7 +50,7 @@ export class ForceGraphModel {
       return {
         source: this.nodeMap.get(dataLink.source),
         target: this.nodeMap.get(dataLink.target),
-        value: 0.5
+        value: 42
       }
     })
   }

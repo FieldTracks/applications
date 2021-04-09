@@ -3,12 +3,14 @@ import {D3Link, D3Node} from "./model";
 export class DrawUtils {
 
   static drawNode(node: D3Node, ctx: CanvasRenderingContext2D): void {
-    const fillColor = '#F00'
+    const fillColor = node.stone ?  '#FAA' : "#F00"
     ctx.beginPath()
-    ctx.arc(node.x, node.y, 8,0, 2*Math.PI)
+    ctx.arc(node.x, node.y, node.stone ? 8 : 4,0, 2*Math.PI)
     ctx.fillStyle = fillColor
     ctx.fill()
   }
+
+
 
   static drawLink(link: D3Link, ctx: CanvasRenderingContext2D): void {
     const gradient = ctx.createLinearGradient(link.source.x, link.source.y, link.target.x, link.target.y)

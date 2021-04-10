@@ -26,19 +26,18 @@ export class ForceGraphModel {
 
   updateData(data: AggregatedGraphNew) {
     const nonNeededNodes = new Set(this.nodes.map(n => n.id))
-    let count = 0
     this.nodes = data.nodes.map((dataNode) => {
       const idStr = dataNode.id
       nonNeededNodes.delete(idStr)
       let node = this.nodeMap.get(idStr)
       if (!node) {
-        console.log("Local?", dataNode.localstone)
         node = {
           name: dataNode.id,
           id: dataNode.id,
           stone: dataNode.localstone,
         }
         this.nodeMap.set(idStr, node)
+      } else {
       }
       return node
 
@@ -50,7 +49,7 @@ export class ForceGraphModel {
       return {
         source: this.nodeMap.get(dataLink.source),
         target: this.nodeMap.get(dataLink.target),
-        value: 42
+        value: 10
       }
     })
   }

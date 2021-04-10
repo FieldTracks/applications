@@ -20,9 +20,7 @@ export interface AggregatedGraphDevice {
   mac: string // MAC: Mandatory for all devices
   lastseen: string  // When was at seen by the aggregator
   localstone: boolean // True, if a device is a JellingStone device transmitting data to this aggregator
-  uuid?: string // UUID, if device is a beacon or stone
-  major?: string // major, if device is a beacon or stone
-  minor?: string // minor, if device is a beacon or stone
+  beaconid?: string // Unique id, if given by a beacon protocol
 }
 
 export interface AggregatedGraphLink {
@@ -49,9 +47,7 @@ export class AggregatedGraphNewGenerator {
         mac: this.numberToMac(num),
         lastseen: now,
         localstone: true,
-        uuid: uuid,
-        major: "4711",
-        minor: num.toString(),
+        beaconid: `${uuid}-4711-${num}`,
       })
     }
     // Create 240 BLE beacons

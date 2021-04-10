@@ -7,7 +7,6 @@ import {
 } from "d3-force";
 
 
-import {AggregatedGraph} from "../../model/aggregated/aggregated-graph";
 import {DrawUtils} from "./utils";
 import {D3Link, D3Node, ForceGraphModel} from "./model";
 import {AggregatedGraphNew} from "../../AggregatedGraphNew";
@@ -17,18 +16,23 @@ import {AggregatedGraphNew} from "../../AggregatedGraphNew";
 //
 export class ForceGraph {
 
-  // Reference to the simulation running at the momemt
+  // Reference to the simulation running at the moment
   private force: Simulation<D3Node,D3Link>
 
   // Model class for the simulation
   private model = new ForceGraphModel()
 
-  // TODO: Externalize canvas-Size
-  constructor(private canvas: HTMLCanvasElement, private repaintCb: () => void) {
+  constructor(private width: number, private height: number, private repaintCb: () => void) {
     this.force = forceSimulation<D3Node,D3Link>()
       .force('charge', forceManyBody().distanceMax(100))
-      .force('center', forceCenter(this.canvas.width / 2, this.canvas.height / 2).strength(1))
       .on('tick', function () { repaintCb()})
+      .force('center', forceCenter(width / 2, height / 2).strength(1))
+  }
+
+  updateSize(width: number, height: number): void {
+    console.log("New Size is:", width, height)
+    this.force.force('center', forceCenter(width / 2, height / 2).strength(1))
+      .restart()
   }
 
   // Update Data: To be called for updating the data in the simulation

@@ -27,6 +27,12 @@ export class BackgroundImage {
   }
 
   paint(g: CanvasRenderingContext2D) {
-    g.drawImage(this.background, 0,0)
+    const [gwidth, gheight] = [g.canvas.width, g.canvas.height]
+    const [imageWidth, imageHeight] = [this.background.width, this.background.height]
+
+    const xoffset = (gwidth > imageWidth) ? (gwidth - imageWidth) / 2: 0
+    const yoffset = (gheight > imageHeight) ? (gheight - imageHeight) / 2: 0
+
+    g.drawImage(this.background, xoffset,yoffset)
   }
 }

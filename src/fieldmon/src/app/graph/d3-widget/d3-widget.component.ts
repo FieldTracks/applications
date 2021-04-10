@@ -7,6 +7,7 @@ import {select} from "d3-selection";
 import {WebdavService} from "../../webdav.service";
 import {BackgroundImage} from "./background-image";
 import {ConfigService} from "../../config.service";
+import {GraphWidgetCallbacks} from "./model";
 
 @Component({
   selector: 'app-d3-widget',
@@ -53,14 +54,13 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
     const that = this
     this.nativeCanvas = this.canvas.nativeElement
     this.context2d = this.nativeCanvas.getContext("2d")
-    this.bgImage = new BackgroundImage( () => this.repaint())
+    this.bgImage = new BackgroundImage( this.toWidgetCallbacks())
     this.initZoom()
-    const [width, height] = this.updateSize()
     window.addEventListener('resize', () => {
-      const [width, height] = that.updateSize()
-      this.forceGraph.updateSize(width,height)
+      that.updateSize()
+      this.forceGraph.updateSize()
     })
-    this.forceGraph = new ForceGraph(width,height, () => this.repaint())
+    this.forceGraph = new ForceGraph(this.toWidgetCallbacks())
     this.activeSubscriptions.push(this.mqttService.graphSubject().subscribe( (graph) => {
       this.forceGraph.updateData(graph)
     }))
@@ -70,6 +70,25 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
       }
     }))
   }
+
+  private toWidgetCallbacks(): GraphWidgetCallbacks {
+    const that = this
+    return {
+      repaint: () =>  {return that.repaint()},
+      width:  () => {return that.widgetWidth()},
+      height: () => {return that.widgetHeight()},
+      transform: () => { return that.transform}
+    }
+  }
+
+  private widgetWidth(): number {
+    return window.innerWidth
+  }
+
+  private widgetHeight() : number {
+    return window.innerHeight - 75
+  }
+
   private initZoom(): void {
     const that = this
     select(this.nativeCanvas).call(zoom()
@@ -80,13 +99,10 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
       }))
   }
 
-  private updateSize():  [number, number]{
-    const width  = window.innerWidth
-    const height = window.innerHeight - 75
-    this.nativeCanvas.width = width
-    this.nativeCanvas.height = height
+  private updateSize():  void {
+    this.nativeCanvas.width = this.widgetWidth()
+    this.nativeCanvas.height = this.widgetHeight()
     this.repaint()
-    return [width,height]
   }
 
   private loadBackgroundImage(url: string) {

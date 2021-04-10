@@ -1,7 +1,9 @@
+import {GraphWidgetCallbacks} from "./model";
+
 export class BackgroundImage {
   readonly background: HTMLImageElement = new Image();
 
-  constructor(private repaintCb: () => void) {
+  constructor(private w: GraphWidgetCallbacks) {
 
     // Retry, when image cannot be loaded
     this.background.onerror = () => {
@@ -14,7 +16,7 @@ export class BackgroundImage {
 
     // Repaint canvas, when image was loaded
     this.background.onload = () => {
-      this.repaintCb()
+      this.w.repaint()
     }
   }
 
@@ -27,12 +29,13 @@ export class BackgroundImage {
   }
 
   paint(g: CanvasRenderingContext2D) {
-    const [gwidth, gheight] = [g.canvas.width, g.canvas.height]
+    const [gwidth, gheight] = [this.w.width(), this.w.height()]
     const [imageWidth, imageHeight] = [this.background.width, this.background.height]
 
     const xoffset = (gwidth > imageWidth) ? (gwidth - imageWidth) / 2: 0
     const yoffset = (gheight > imageHeight) ? (gheight - imageHeight) / 2: 0
 
-    g.drawImage(this.background, xoffset,yoffset)
+    //g.drawImage(this.background, xoffset,yoffset)
+    g.drawImage(this.background, 0,0)
   }
 }

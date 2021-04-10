@@ -1,6 +1,13 @@
-import {AggregatedGraph} from "../../model/aggregated/aggregated-graph";
 import {SimulationLinkDatum, SimulationNodeDatum} from "d3-force";
 import {AggregatedGraphNew} from "../../AggregatedGraphNew";
+import {ZoomTransform} from "d3-zoom";
+
+export declare type GraphWidgetCallbacks = {
+  repaint: () => void,
+  transform: () => ZoomTransform,
+  width: () => number,
+  height: () => number
+}
 
 export interface D3Node extends SimulationNodeDatum{
   name: string;

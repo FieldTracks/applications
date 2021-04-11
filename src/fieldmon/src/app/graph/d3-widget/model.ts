@@ -1,12 +1,13 @@
 import {SimulationLinkDatum, SimulationNodeDatum} from "d3-force";
 import {AggregatedGraphNew} from "../../AggregatedGraphNew";
 import {ZoomTransform} from "d3-zoom";
+import {D3DragEvent} from "d3-drag";
 
 export declare type DragAndDropHandlers = {
   dragsubject: any,
-  dragstarted: (any) => void
-  dragended: (any) => void,
-  dragged: (any) => void
+  dragstarted: (event: D3DragEvent<any, any, D3Node>) => void
+  dragended: (event: D3DragEvent<any, any, D3Node>) => void,
+  dragged: (event: D3DragEvent<any, any, D3Node>) => void
 }
 
 

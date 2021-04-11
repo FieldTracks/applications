@@ -2,7 +2,7 @@ import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from
 import {Subscription} from "rxjs";
 import {MqttAdapterService} from "../../mqtt-adapter.service";
 import {ForceGraph} from "./force-simulation";
-import {zoom, zoomIdentity, ZoomTransform} from "d3-zoom";
+import {D3ZoomEvent, zoom, ZoomBehavior, ZoomedElementBaseType, zoomIdentity, ZoomTransform} from "d3-zoom";
 import {select} from "d3-selection";
 import {WebdavService} from "../../webdav.service";
 import {BackgroundImage} from "./background-image";
@@ -20,12 +20,16 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
   private activeSubscriptions: Subscription[] = []
   private forceGraph: ForceGraph
 
-  @ViewChild('canvas') canvas: ElementRef<HTMLCanvasElement>
+  //@ViewChild('canvas') canvas: ElementRef<HTMLCanvasElement>
+  @ViewChild('container') containerDiv: ElementRef<HTMLDivElement>
+
   private nativeCanvas: HTMLCanvasElement;
   private context2d: CanvasRenderingContext2D;
 
   private transform: ZoomTransform = zoomIdentity
   private bgImage: BackgroundImage
+  private zoomBehavior: ZoomBehavior<ZoomedElementBaseType, unknown>;
+
 
   constructor(private mqttService: MqttAdapterService,
               private webdavService: WebdavService,
@@ -52,13 +56,20 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    const that = this
-    this.nativeCanvas = this.canvas.nativeElement
+    const canvasElem = select(this.containerDiv.nativeElement)
+      .append('canvas')
+      .attr('width', this.widgetWidth() + 'px')
+      .attr('height', this.widgetHeight() + 'px');
+
+    this.nativeCanvas = canvasElem.node()
+
     this.context2d = this.nativeCanvas.getContext("2d")
     this.bgImage = new BackgroundImage( this.toWidgetCallbacks())
-    this.updateSize()
+    //this.updateSize()
     window.addEventListener('resize', () => {
-      that.updateSize()
+      canvasElem
+        .attr('width', window.innerWidth + 'px')
+        .attr('height', window.innerHeight - 75 + 'px');
       this.forceGraph.updateSize()
     })
     this.forceGraph = new ForceGraph(this.toWidgetCallbacks())
@@ -95,27 +106,45 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
   private initActions(): void {
     const that = this
     const handlers = that.forceGraph.dragAndDropHandlers()
+    this.zoomBehavior = zoom()
+      .scaleExtent([1/10,8])
+      .on("zoom", function(event: D3ZoomEvent<any, any>) {
+        console.log("old / new transform / event", that.transform, event.transform,event)
+        that.transform = event.transform
+        that.repaint()
+      })
     select(this.nativeCanvas)
       .call(drag()
-          .container(this.nativeCanvas)
+          //.container(this.nativeCanvas)
           .subject(handlers.dragsubject)
           .on('start', handlers.dragstarted)
           .on('drag', handlers.dragged)
           .on('end', handlers.dragstarted)
         )
-    .call(zoom()
-      .scaleExtent([1/10,8])
-      .on("zoom", function(event) {
-        that.transform = event.transform
-        that.repaint()
-      }))
+    .call(this.zoomBehavior)
   }
 
-  private updateSize():  void {
-    this.nativeCanvas.width = this.widgetWidth()
-    this.nativeCanvas.height = this.widgetHeight()
-    this.repaint()
-  }
+  // Disabled, hoping that it helps to go back to the old fieldmon proceedings
+  // private updateSize():  void {
+  //   const w = this.widgetWidth()
+  //   const h = this.widgetHeight()
+  //   this.nativeCanvas.width = w
+  //   this.nativeCanvas.height = h
+  //   // C.f. https://stackoverflow.com/questions/39735367/d3-zoom-behavior-when-window-is-resized
+  //   // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+  //   // Due to some oddity, the zoom has no clue about windows or canvases being resized
+  //   // This is also addressed in https://github.com/d3/d3-zoom/issues/136
+  //   // In summary, one could considered the api to be tousled, but working as specified
+  //   // as a result, our resize handler is required to update the size in used for the zoom behaviour
+  //   if(this.zoomBehavior) {
+  //     this.zoomBehavior = this.zoomBehavior
+  //       //.extent([[0,0],[w,h]])
+  //       //.translateExtent([[0,0],[w,h]])
+  //     select(this.nativeCanvas).call(this.zoomBehavior)
+  //   }
+  //
+  //   this.repaint()
+  // }
 
   private loadBackgroundImage(url: string) {
     this.webdavService.getAsObjectUrl(url).subscribe( (image) => {

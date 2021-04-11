@@ -56,21 +56,28 @@ export class ForceGraph {
     const that = this
     return {
       dragstarted: function (event) {
-        console.log("dragstarted" , event)
+        //[event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y]);
+        //event.subject.fx = that.w.transform().invertX(event.subject.x);
+        //event.subject.fy = that.w.transform().invertY(event.subject.y);
+        event.subject.fixed = true
         if (!event.active) {
           that.force.alphaTarget(0.5).restart();
         }
-        [event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y]);
-        //[event.subject.fx, event.subject.fy] = [event.x, event.y];
       },
       dragged: function (event) {
-        [event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y]);
-        //[event.subject.fx, event.subject.fy] = [event.x, event.y];
+        //event.subject.fx = that.w.transform().invertX(event.x);
+        //event.subject.fy = that.w.transform().invertY(event.y);
+        [event.subject.fx, event.subject.fy] = [event.x, event.y]
+
+        // [event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y]);
+        //event.subject.fx = that.w.transform().invertX(event.x);
+        //event.subject.fy = that.w.transform().invertY(event.y);
       },
       dragended: function (event) {
         if (!event.active) {
           that.force.alphaTarget(0);
         }
+        event.subject.fixed = true
         //event.subject.fx = null;
         //event.subject.fy = null;
       },

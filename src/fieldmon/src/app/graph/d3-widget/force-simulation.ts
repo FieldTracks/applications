@@ -28,7 +28,7 @@ export class ForceGraph {
     this.force = forceSimulation<D3Node,D3Link>()
       .force('charge', forceManyBody().distanceMax(100))
       .on('tick', function () { w.onRepaint()})
-      .force('center', forceCenter(w.width() / 2, w.height() / 2).strength(1))
+      .force('center', forceCenter(w.width() / 2, w.height() / 2))//.strength(1))
       .alphaDecay(0.1)
   }
 
@@ -56,24 +56,16 @@ export class ForceGraph {
     const that = this
     return {
       dragstarted: function (event) {
-        //[event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y]);
-        //event.subject.fx = that.w.transform().invertX(event.subject.x);
-        //event.subject.fy = that.w.transform().invertY(event.subject.y);
         event.subject.fixed = true
         if (!event.active) {
           that.force.alphaTarget(0.5).restart();
         }
       },
       dragged: function (event) {
-        //event.subject.fx = that.w.transform().invertX(event.x);
-        //event.subject.fy = that.w.transform().invertY(event.y);
-        [event.subject.fx, event.subject.fy] = [event.x, event.y]
-
-        // [event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y]);
-        //event.subject.fx = that.w.transform().invertX(event.x);
-        //event.subject.fy = that.w.transform().invertY(event.y);
+        [event.subject.fx, event.subject.fy] = that.w.transform().invert([event.x, event.y])
       },
       dragended: function (event) {
+        console.log("Node placed:", event.subject)
         if (!event.active) {
           that.force.alphaTarget(0);
         }

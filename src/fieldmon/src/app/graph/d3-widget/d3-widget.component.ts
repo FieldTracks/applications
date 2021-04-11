@@ -59,13 +59,13 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
     const canvasElem = select(this.containerDiv.nativeElement)
       .append('canvas')
       .attr('width', this.widgetWidth() + 'px')
-      .attr('height', this.widgetHeight() + 'px');
+      .attr('height', this.widgetHeight() + 'px')
+
 
     this.nativeCanvas = canvasElem.node()
 
     this.context2d = this.nativeCanvas.getContext("2d")
     this.bgImage = new BackgroundImage( this.toWidgetCallbacks())
-    //this.updateSize()
     window.addEventListener('resize', () => {
       canvasElem
         .attr('width', window.innerWidth + 'px')
@@ -102,26 +102,28 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
   private widgetHeight() : number {
     return window.innerHeight - 75
   }
+  private zoomed(transform: any): void {
+    console.log("Setting transform ",transform)
+    this.transform = transform
+    this.repaint()
+
+  }
 
   private initActions(): void {
     const that = this
     const handlers = that.forceGraph.dragAndDropHandlers()
-    this.zoomBehavior = zoom()
+    const zoomB = zoom()
       .scaleExtent([1/10,8])
-      .on("zoom", function(event: D3ZoomEvent<any, any>) {
-        console.log("old / new transform / event", that.transform, event.transform,event)
-        that.transform = event.transform
-        that.repaint()
-      })
-    select(this.nativeCanvas)
-      .call(drag()
-          //.container(this.nativeCanvas)
-          .subject(handlers.dragsubject)
-          .on('start', handlers.dragstarted)
-          .on('drag', handlers.dragged)
-          .on('end', handlers.dragstarted)
-        )
-    .call(this.zoomBehavior)
+      .on("zoom", ({transform}) => this.zoomed(transform))
+    const dragB = drag()
+      //.container(this.nativeCanvas)
+      .subject(handlers.dragsubject)
+      .on('start', handlers.dragstarted)
+      .on('drag', handlers.dragged)
+      .on('end', handlers.dragended)
+    select(this.containerDiv.nativeElement)
+      .call(dragB)
+      .call(zoomB)
   }
 
   // Disabled, hoping that it helps to go back to the old fieldmon proceedings

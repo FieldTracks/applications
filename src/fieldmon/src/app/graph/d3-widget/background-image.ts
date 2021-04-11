@@ -1,9 +1,8 @@
-import {GraphWidgetCallbacks} from "./model";
 
 export class BackgroundImage {
   readonly background: HTMLImageElement = new Image();
 
-  constructor(private w: GraphWidgetCallbacks) {
+  constructor(private ctx: CanvasRenderingContext2D, private canvas: HTMLCanvasElement, private repaint: () => void) {
 
     // Retry, when image cannot be loaded
     this.background.onerror = () => {
@@ -16,7 +15,7 @@ export class BackgroundImage {
 
     // Repaint canvas, when image was loaded
     this.background.onload = () => {
-      this.w.onRepaint()
+      this.repaint()
     }
   }
 
@@ -28,14 +27,14 @@ export class BackgroundImage {
     this.background.src = src
   }
 
-  paint(g: CanvasRenderingContext2D) {
-    const [gwidth, gheight] = [this.w.width(), this.w.height()]
-    const [imageWidth, imageHeight] = [this.background.width, this.background.height]
+  paint() {
+    //const [gwidth, gheight] = [this.canvas.width, this.canvas.height]
+    //const [imageWidth, imageHeight] = [this.background.width, this.background.height]
+    this.ctx.drawImage(this.background, 0,0)
 
-    const xoffset = (gwidth > imageWidth) ? (gwidth - imageWidth) / 2: 0
-    const yoffset = (gheight > imageHeight) ? (gheight - imageHeight) / 2: 0
-
-    //g.drawImage(this.background, xoffset,yoffset)
-    g.drawImage(this.background, 0,0)
+    // Alternative, falls Bild in die Mitte soll
+    // const xoffset = (gwidth > imageWidth) ? (gwidth - imageWidth) / 2: 0
+    // const yoffset = (gheight > imageHeight) ? (gheight - imageHeight) / 2: 0
+    // //g.drawImage(this.background, xoffset,yoffset)
   }
 }

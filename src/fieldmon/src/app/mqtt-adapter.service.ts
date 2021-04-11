@@ -160,7 +160,7 @@ export class MqttAdapterService implements OnDestroy {
   public graphSubject(): Observable<AggregatedGraphNew> {
     const generator = new AggregatedGraphNewGenerator()
 
-    return timer(0).pipe(map( (val) => {
+    return timer(0,3000).pipe(map( (val) => {
         const gg = generator.graphForIteration(val)
         console.log("Got",gg)
         return gg

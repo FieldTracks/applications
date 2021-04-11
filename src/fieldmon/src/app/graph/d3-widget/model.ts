@@ -1,23 +1,6 @@
 import {SimulationLinkDatum, SimulationNodeDatum} from "d3-force";
 import {AggregatedGraphNew} from "../../AggregatedGraphNew";
-import {ZoomTransform} from "d3-zoom";
-import {D3DragEvent} from "d3-drag";
 
-export declare type DragAndDropHandlers = {
-  dragsubject: any,
-  dragstarted: (event: D3DragEvent<any, any, D3Node>) => void
-  dragended: (event: D3DragEvent<any, any, D3Node>) => void,
-  dragged: (event: D3DragEvent<any, any, D3Node>) => void
-}
-
-
-export declare type GraphWidgetCallbacks = {
-  onRepaint: () => void,
-  transform: () => ZoomTransform,
-  width: () => number,
-  height: () => number,
-  onNodeSelected: (node: D3Node) => void
-}
 
 export interface D3Node extends SimulationNodeDatum{
   name: string;
@@ -26,7 +9,7 @@ export interface D3Node extends SimulationNodeDatum{
   y?: number;
   fx?: number;
   fy?: number;
-  fixed?: boolean;
+  fixed?: boolean
   stone?: boolean
 }
 export interface D3Link extends SimulationLinkDatum<D3Node>{
@@ -41,7 +24,7 @@ export class ForceGraphModel {
   public nodes: D3Node[] = []
 
 
-  updateData(data: AggregatedGraphNew) {
+  updateData(data: AggregatedGraphNew, initialPos: [number,number]) {
     const nonNeededNodes = new Set(this.nodes.map(n => n.id))
     this.nodes = data.nodes.map((dataNode) => {
       const idStr = dataNode.id
@@ -52,6 +35,8 @@ export class ForceGraphModel {
           name: dataNode.id,
           id: dataNode.id,
           stone: dataNode.localstone,
+          x: initialPos[0],
+          y: initialPos[1],
         }
         this.nodeMap.set(idStr, node)
       } else {
@@ -66,7 +51,7 @@ export class ForceGraphModel {
       return {
         source: this.nodeMap.get(dataLink.source),
         target: this.nodeMap.get(dataLink.target),
-        value: 10
+        value: 1
       }
     })
   }

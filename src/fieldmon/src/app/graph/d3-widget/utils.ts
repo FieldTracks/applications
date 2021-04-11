@@ -3,12 +3,18 @@ import {D3Link, D3Node} from "./model";
 export class DrawUtils {
 
   static drawNode(node: D3Node, ctx: CanvasRenderingContext2D): void {
-    const fillColor = node.stone ?  '#FAA' : "#F00"
     ctx.beginPath()
     ctx.arc(node.x, node.y, node.stone ? 8 : 4,0, 2*Math.PI)
-    ctx.fillStyle = fillColor
+    if(node.stone && node.fixed) {
+      ctx.fillStyle = "#00F"
+     } else if(node.stone) {
+      ctx.fillStyle = "#F00"
+     } else {
+      ctx.fillStyle = "#F0F"
+    }
     ctx.fill()
   }
+
 
 
 

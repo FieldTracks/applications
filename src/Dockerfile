@@ -97,6 +97,10 @@ RUN dpkg -i /tmp/*.deb && \
     a2enmod auth_jwt && \
     a2enmod authz_groupfile  && \
     a2enmod rewrite  && \
+    a2enmod proxy && \
+    a2enmod proxy_http  && \
+    a2enmod proxy_wstunnel  && \
+    a2enmod deflate  && \
     rm /etc/apache2/sites-enabled/* && \
     ln -s /data/etc/apache2/vhosts.conf /etc/apache2/sites-enabled/vhosts.conf && \
     rm -r /var/log/mosquitto && \

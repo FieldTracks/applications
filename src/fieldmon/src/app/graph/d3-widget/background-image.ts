@@ -16,7 +16,7 @@ export class BackgroundImage {
 
     // Repaint canvas, when image was loaded
     this.background.onload = () => {
-      this.w.repaint()
+      this.w.onRepaint()
     }
   }
 

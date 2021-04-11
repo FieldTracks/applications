@@ -2,11 +2,20 @@ import {SimulationLinkDatum, SimulationNodeDatum} from "d3-force";
 import {AggregatedGraphNew} from "../../AggregatedGraphNew";
 import {ZoomTransform} from "d3-zoom";
 
+export declare type DragAndDropHandlers = {
+  dragsubject: any,
+  dragstarted: (any) => void
+  dragended: (any) => void,
+  dragged: (any) => void
+}
+
+
 export declare type GraphWidgetCallbacks = {
-  repaint: () => void,
+  onRepaint: () => void,
   transform: () => ZoomTransform,
   width: () => number,
-  height: () => number
+  height: () => number,
+  onNodeSelected: (node: D3Node) => void
 }
 
 export interface D3Node extends SimulationNodeDatum{

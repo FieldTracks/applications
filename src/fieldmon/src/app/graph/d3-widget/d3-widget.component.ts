@@ -8,6 +8,7 @@ import {WebdavService} from "../../webdav.service";
 import {BackgroundImage} from "./background-image";
 import {ConfigService} from "../../config.service";
 import {GraphWidgetCallbacks} from "./model";
+import {drag} from "d3-drag";
 
 @Component({
   selector: 'app-d3-widget',
@@ -55,7 +56,7 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
     this.nativeCanvas = this.canvas.nativeElement
     this.context2d = this.nativeCanvas.getContext("2d")
     this.bgImage = new BackgroundImage( this.toWidgetCallbacks())
-    this.initZoom()
+    this.updateSize()
     window.addEventListener('resize', () => {
       that.updateSize()
       this.forceGraph.updateSize()
@@ -69,15 +70,17 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
         this.loadBackgroundImage(config.backgroundImage)
       }
     }))
+    this.initActions()
   }
 
   private toWidgetCallbacks(): GraphWidgetCallbacks {
     const that = this
     return {
-      repaint: () =>  {return that.repaint()},
+      onRepaint: () =>  {return that.repaint()},
       width:  () => {return that.widgetWidth()},
       height: () => {return that.widgetHeight()},
-      transform: () => { return that.transform}
+      transform: () => { return that.transform},
+      onNodeSelected: (node) => {}
     }
   }
 
@@ -89,9 +92,18 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
     return window.innerHeight - 75
   }
 
-  private initZoom(): void {
+  private initActions(): void {
     const that = this
-    select(this.nativeCanvas).call(zoom()
+    const handlers = that.forceGraph.dragAndDropHandlers()
+    select(this.nativeCanvas)
+      .call(drag()
+          .container(this.nativeCanvas)
+          .subject(handlers.dragsubject)
+          .on('start', handlers.dragstarted)
+          .on('drag', handlers.dragged)
+          .on('end', handlers.dragstarted)
+        )
+    .call(zoom()
       .scaleExtent([1/10,8])
       .on("zoom", function(event) {
         that.transform = event.transform
@@ -108,7 +120,6 @@ export class D3WidgetComponent implements AfterViewInit, OnDestroy {
   private loadBackgroundImage(url: string) {
     this.webdavService.getAsObjectUrl(url).subscribe( (image) => {
       if(this.bgImage.imageSrc() != image) {
-        console.log("Updating background image...")
         this.bgImage.updateImage(image)
       }
     });

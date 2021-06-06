@@ -8,3 +8,7 @@ data class StoneContact(val min: Double, val max: Double, val avg: Double, val m
 data class AggregatedGraph(val timestamp: String, val nodes: ArrayList<AggregatedGraphNode>, val links: ArrayList<AggregatedGraphLink>)
 data class AggregatedGraphNode(val id: String, val mac: String, val lastSeen: String, val localstone: Boolean, val beaconid: String?)
 data class AggregatedGraphLink(val source: String, val target: String, val timestmp: String, val rssi: Double)
+
+// TODO: Major-Minor -> Network, Instance
+data class StoneStatistics(val mac: String, val min: Double, val maj: Double, val int: Double, val up: Double,
+                           val bat: Double, val bs: String, val ch: Number, val rx: Number)

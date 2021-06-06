@@ -7,20 +7,16 @@ import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.fixedRateTimer
 
-interface MessageReciver {
-    fun onMessageReceived(topic: String, message: String)
-    fun mqttTopics(): List<String>
-}
-
 class ScheduledBatchReceiver<RESULT,UPDATE>(
     private val name: String, // To be used in scheduling Thread
+    private val invokeIfNopdates: Boolean, // Perfrom the invocation, even if there are no updates
     private val processor: BatchProcessor<RESULT,UPDATE>,
-    private val mqttClient: MqttAsyncClient,
     private val updateTopicStructure: Pair<String, Class<UPDATE>>,
-    private val resultTopicStructure: Pair<String, Class<RESULT>>,
+    private val resultTopicStructure: Pair<String, Class<RESULT>>? = null,
+    private val publisher: Publisher? = null,
     private val updateTopicPattern: String = updateTopicStructure.first,
-   private val maxBatchSize:Int = 100_000, // Upper limit for batch-size
-): MessageReciver {
+    private val maxBatchSize:Int = 100_000, // Upper limit for batch-size
+): MessageReceiver {
     private val updateQueue = ConcurrentLinkedQueue<UPDATE>()
     private val prevResultQueue = ConcurrentLinkedQueue<RESULT>()
     private val log = LoggerFactory.getLogger(ScheduledBatchReceiver::class.java)
@@ -31,7 +27,7 @@ class ScheduledBatchReceiver<RESULT,UPDATE>(
         try {
             if(topic.startsWith(updateTopicStructure.first)){
                 updateQueue.add(gson.fromJson(message,updateTopicStructure.second))
-            } else if(topic.startsWith(resultTopicStructure.first)) {
+            } else if(resultTopicStructure != null && topic.startsWith(resultTopicStructure.first)) {
                 prevResultQueue.add(gson.fromJson(message,resultTopicStructure.second))
             }
         } catch (e: Exception) {
@@ -48,7 +44,7 @@ class ScheduledBatchReceiver<RESULT,UPDATE>(
     }
 
     override fun  mqttTopics(): List<String> {
-        return listOf(updateTopicPattern,resultTopicStructure.first)
+        return listOf(updateTopicPattern,resultTopicStructure?.first ).mapNotNull { it }
     }
 
 
@@ -75,16 +71,13 @@ class ScheduledBatchReceiver<RESULT,UPDATE>(
         if(resultCnt > 1) {
             log.error("Multiple aggregators for $name. - Received $resultCnt previous results while collecting reports")
         }
-        publish(processor.processBatch(receivedResults.lastOrNull(),elements))
-    }
-
-    private fun publish(result: RESULT?) {
-        if(result != null) {
-            val payload = gson.toJson(result).toByteArray(Charset.forName("UTF-8"))
-            mqttClient.publish(resultTopicStructure.first,payload,0,true)
+        val result = processor.processBatch(receivedResults.lastOrNull(),elements);
+        if(invokeIfNopdates || cnt > 0) {
+            if(publisher != null && resultTopicStructure != null && result != null ) {
+                publisher.publish(resultTopicStructure.first,result)
+            }
         }
     }
+
 }
-interface BatchProcessor<RESULT,UPDATE>{
-    fun processBatch(prevResult: RESULT?, messages: List<UPDATE>): RESULT?
-}
+

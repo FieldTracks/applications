@@ -3,6 +3,11 @@
 # Therefore, we create a container for building the module on a Debian Buster system
 # It uses buster-backports, because checkinstall is not included in buster
 
+FROM maven:3.8-openjdk-11 as javabuild
+COPY middleware /middleware
+RUN cd /middleware && mvn install
+
+
 FROM debian:buster-backports AS build
 RUN apt-get update && apt-get install -y libtool \
     pkg-config \
@@ -41,6 +46,7 @@ RUN cd / && git clone https://github.com/AnthonyDeroche/mod_authnz_jwt && \
 RUN cd / && git clone https://github.com/iegomez/mosquitto-go-auth.git && \
     cd /mosquitto-go-auth && \
     CGO_CFLAGS="-I/usr/include -fPIC" CGO_LDFLAGS="-shared" make
+
 
 FROM node:14 as build-angular
 RUN npm install -g @angular/cli@v10
@@ -84,9 +90,12 @@ RUN apt-get update && apt-get upgrade -y && apt-get -y install \
 	openssh-server \
 	python3-pip \
 	libmariadbclient-dev \
-	libmariadb-dev-compat
+	libmariadb-dev-compat \
+  openjdk-11-jre
 COPY --from=build /mosquitto-go-auth/go-auth.so /usr/local/lib
 COPY --from=build "/libjwt/*.deb" "/mod_authnz_jwt/*.deb" /tmp/
+
+COPY --from=javabuild "/middleware/target/middleware-*.jar" /middleware.jar
 
 COPY --from=build-angular /fieldmon/dist/* /var/www/html
 COPY --from=python-build "/StoneSimulator/packaging/*.deb" "/StoneAggregator/packaging/*.deb" "/StoneFlashtool/packaging/*.deb" /tmp/

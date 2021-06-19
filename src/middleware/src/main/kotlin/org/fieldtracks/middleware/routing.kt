@@ -34,7 +34,6 @@ class MessageRouter(private val mqttClient: MqttAsyncClient) {
         invokeIfNopdates = false
     )
 
-
     private val receivers = listOf(graphReceiver,reportLoggingReceiver,statisticsReceiver)
 
     fun subscribe() {

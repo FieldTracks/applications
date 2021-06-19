@@ -6,7 +6,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="org.fieldtracks.middleware.MqttProcess" level="debug" additivity="false">
+        <Logger name="org.fieldtracks" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Root level="warn">

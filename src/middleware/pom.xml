@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -12,13 +13,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.5.10</kotlin.version>
-        <kotlinx.version>1.5.0</kotlinx.version>
+        <kotlin.version>1.4.21</kotlin.version>
+        <kotlinx.version>1.4.0</kotlinx.version>
         <kotlin.code.style>official</kotlin.code.style>
         <junit.version>4.12</junit.version>
         <log4j2.version>2.14.1</log4j2.version>
         <paho.version>1.2.5</paho.version>
-        <gson.version>2.8.7</gson.version>
+        <jackson.version>2.12.3</jackson.version>
         <shadedjarplugin.version>3.2.4</shadedjarplugin.version>
     </properties>
 
@@ -45,21 +46,21 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-            <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-slf4j-impl</artifactId>
-                <version>${log4j2.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.paho</groupId>
-                <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-                <version>${paho.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.code.gson</groupId>
-                <artifactId>gson</artifactId>
-                <version>${gson.version}</version>
-            </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j2.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>${paho.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -105,7 +106,8 @@
                         </filter>
                     </filters>
                     <!-- Additional configuration. -->
-                </configuration>                <executions>
+                </configuration>
+                <executions>
                     <execution>
                         <id>shade-cli</id>
                         <phase>package</phase>

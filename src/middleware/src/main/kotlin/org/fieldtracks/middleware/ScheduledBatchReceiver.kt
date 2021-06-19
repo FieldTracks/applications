@@ -1,9 +1,7 @@
 package org.fieldtracks.middleware
 
-import com.google.gson.Gson
-import org.eclipse.paho.client.mqttv3.MqttAsyncClient
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.slf4j.LoggerFactory
-import java.nio.charset.Charset
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.concurrent.fixedRateTimer
 
@@ -20,15 +18,15 @@ class ScheduledBatchReceiver<RESULT,UPDATE>(
     private val updateQueue = ConcurrentLinkedQueue<UPDATE>()
     private val prevResultQueue = ConcurrentLinkedQueue<RESULT>()
     private val log = LoggerFactory.getLogger(ScheduledBatchReceiver::class.java)
-    private val gson = Gson()
+    private val mapper = jacksonObjectMapper()
 
     // To be called, when a new MQTT-Message is received
     override fun onMessageReceived(topic: String, message: String) {
         try {
             if(topic.startsWith(updateTopicStructure.first)){
-                updateQueue.add(gson.fromJson(message,updateTopicStructure.second))
+                updateQueue.add(mapper.readValue(message,updateTopicStructure.second))
             } else if(resultTopicStructure != null && topic.startsWith(resultTopicStructure.first)) {
-                prevResultQueue.add(gson.fromJson(message,resultTopicStructure.second))
+                prevResultQueue.add(mapper.readValue(message,resultTopicStructure.second))
             }
         } catch (e: Exception) {
             log.error("Skipping non-parseable message in topic $topic - content: $message", e)

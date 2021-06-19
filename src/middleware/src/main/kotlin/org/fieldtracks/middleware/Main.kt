@@ -2,9 +2,9 @@ package org.fieldtracks.middleware
 
 import org.eclipse.paho.client.mqttv3.*
 import org.fieldtracks.middleware.utils.AppConfiguration
+import org.fieldtracks.middleware.utils.ENV_CONFIGURATION
 import org.fieldtracks.middleware.utils.StoneSimulator
 import org.slf4j.LoggerFactory
-import java.lang.System.getProperty
 import java.nio.charset.Charset
 import java.util.*
 import java.util.zip.Inflater
@@ -14,7 +14,7 @@ class MqttProcess(val config: AppConfiguration) {
     private val uuid = UUID.randomUUID()
     private val log = LoggerFactory.getLogger(MqttProcess::class.java)
     val mqttClient = MqttAsyncClient(config.mqttUrl, "ft-middleware-$uuid")
-    private val router = MessageRouter(mqttClient)
+    private val router = MessageRouter(mqttClient,config)
 
     fun start() {
         mqttClient.setCallback(Callback(router))
@@ -64,26 +64,6 @@ private class Callback(val router: MessageRouter): MqttCallback {
     }
     override fun deliveryComplete(token: IMqttDeliveryToken) {
         log.info("Deliver completed for message id: ${token.message.id}")
-    }
-}
-
-private object ENV_CONFIGURATION: AppConfiguration(
-    mqttUrl = getProperty("MQTT_URL",""),
-    mqttUser = getProperty("MQTT_USER") ?: "",
-    mqttPassword = getProperty("MQTT_PASSWORD") ?: "",
-    simulateStones = getProperty("SIMULATE_STONES","").uppercase() == "TRUE"
-) {
-    val log = LoggerFactory.getLogger(AppConfiguration::class.java)
-    init {
-        require(mqttUrl != "") {"MQTT_URL not set. Broker unknown"}
-        if(mqttUser.isBlank()) {
-            log.warn("MQTT_USER not set. Not sending username")
-        }
-        if(mqttPassword.isBlank()) {
-            log.warn("MQTT_PASSWORD not set. Not sending password")
-        }
-        val loggedPassword = if (mqttPassword.isNotBlank()) { "[***]" } else { "" }
-        log.info("Starting process Broker-URL: '${mqttUrl}', User: '$mqttUser', Password: '$loggedPassword'")
     }
 }
 

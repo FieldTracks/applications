@@ -1,16 +1,15 @@
 package org.fieldtracks.middleware
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient
 import org.fieldtracks.middleware.processors.AggregatedGraphProcessor
 import org.fieldtracks.middleware.processors.StoneStatisticsProcessor
+import org.fieldtracks.middleware.utils.AppConfiguration
 import org.slf4j.LoggerFactory
-import java.nio.charset.Charset
 import java.util.zip.Deflater
 
-class MessageRouter(private val mqttClient: MqttAsyncClient) {
+class MessageRouter(private val mqttClient: MqttAsyncClient, private val conf: AppConfiguration) {
     private val log = LoggerFactory.getLogger(MessageRouter::class.java)
-
 
     private val reportLoggingReceiver = SimpleReceiver(topic = "JellingStone/") { topic: String, message: String ->
         log.info("Received stone report", message)
@@ -19,7 +18,7 @@ class MessageRouter(private val mqttClient: MqttAsyncClient) {
     private val graphReceiver = ScheduledBatchReceiver(
         name = "aggregated-graph",
         publisher = CompressingPublisher(mqttClient,true,0),
-        processor = AggregatedGraphProcessor(),
+        processor = AggregatedGraphProcessor(conf),
         updateTopicStructure = "JellingStone/" to StoneReport::class.java,
         resultTopicStructure = "Aggregated/Graph" to AggregatedGraph::class.java,
         updateTopicPattern = "JellingStone/#",
@@ -53,12 +52,14 @@ class CompressingPublisher(
     private val retain: Boolean,
     private val qos: Int
     ): Publisher {
+    private val mapper = jacksonObjectMapper()
+
     override fun publish(topic: String, messageData: Any) {
-        val gson = Gson();
-        val data = gson.toJson(messageData)
-        val buffer = ByteArray(data.length)
+
+        val data = mapper.writeValueAsBytes(messageData)
+        val buffer = ByteArray(data.size)
         val deflate = Deflater(Deflater.BEST_COMPRESSION)
-        deflate.setInput(data.toByteArray(Charset.forName("UTF-8")))
+        deflate.setInput(data)
         deflate.finish()
         val length = deflate.deflate(buffer)
         deflate.end()

@@ -1,12 +1,11 @@
 package org.fieldtracks.middleware.utils
 
-import com.google.gson.Gson
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient
 import org.fieldtracks.middleware.CompressingPublisher
 import org.fieldtracks.middleware.StoneContact
 import org.fieldtracks.middleware.StoneReport
 import org.slf4j.LoggerFactory
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 import kotlin.collections.ArrayList
@@ -48,19 +47,19 @@ class StoneSimulator(mqttAsyncClient: MqttAsyncClient, config: AppConfiguration,
     }
 
     fun publishStones() {
-        val tstmp = LocalDateTime.now().toString()
+        val tstmp = ZonedDateTime.now()
         val reports = stones.map {StoneReport(
             timestamp = tstmp,
             mac = it.mac,
             comment = it.comment,
-            interval = 8.0,devices = ArrayList()
+            interval = 8.0,data = ArrayList()
         )}
         // Assume 20% chance seeing a certain stone
         for(report in reports) {
             for(stone in stones) {
                 if(Math.random() >= 0.8) {
                     val rssi = rndRssi()
-                    report.devices.add(StoneContact(
+                    report.data.add(StoneContact(
                         min = rssi.first,
                         max = rssi.second,
                         avg = rssi.third,
@@ -75,11 +74,11 @@ class StoneSimulator(mqttAsyncClient: MqttAsyncClient, config: AppConfiguration,
         for(device in devices) {
             val stone = reports[ThreadLocalRandom.current().nextInt(0,stones.size -1)]
             val sr = rndRssi()
-            stone.devices.add(StoneContact(sr.first,sr.second,sr.third,device.mac,device.network_id,device.beacon_id))
+            stone.data.add(StoneContact(sr.first,sr.second,sr.third,device.mac,device.network_id,device.beacon_id))
             for(report in reports) {
                 if(stone.mac != report.mac && Math.random() > 0.8) {
                     val rr = rndRssi()
-                    report.devices.add(StoneContact(rr.first,rr.second,rr.third,device.mac,device.network_id,device.beacon_id))
+                    report.data.add(StoneContact(rr.first,rr.second,rr.third,device.mac,device.network_id,device.beacon_id))
                 }
             }
         }

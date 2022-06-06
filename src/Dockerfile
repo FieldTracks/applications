@@ -4,7 +4,7 @@
 # It uses buster-backports, because checkinstall is not included in buster
 
 FROM maven:3.8-openjdk-11 as javabuild
-COPY middleware /middleware
+COPY middleware.foo /middleware
 RUN cd /middleware && mvn install
 
 

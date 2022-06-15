@@ -1,6 +1,7 @@
 package org.fieldtracks.middleware.services
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.eclipse.paho.client.mqttv3.IMqttClient
 import org.slf4j.LoggerFactory
 import java.math.BigInteger
@@ -20,7 +21,7 @@ class ScanService(
     private val timer: Timer = Timer()
     private val logger = LoggerFactory.getLogger(ScanService::class.java)
 
-    private val mapper = ObjectMapper()
+    private val mapper = ObjectMapper().registerKotlinModule()
     private val reportQueue = ConcurrentLinkedQueue<ScanReportMessage>()
 
     @Volatile
@@ -33,14 +34,23 @@ class ScanService(
     fun connectComplete(reconnect: Boolean) {
         if(!reconnect) {
             client.subscribe("JellingStone/scan/#") { topic, msg ->
-                val stone = topic.removePrefix("JellingStone/scan/")
-                val parsed = ScanReportMessage.parse(stone, msg.payload)
-                if(parsed != null) {
-                    reportQueue.add(parsed)
+                try {
+                    val stone = topic.removePrefix("JellingStone/scan/")
+                    val parsed = ScanReportMessage.parse(stone, msg.payload)
+                    if(parsed != null) {
+                        reportQueue.add(parsed)
+                    }
+                } catch (t: Throwable) {
+                    logger.warn("Skipping message due to error in topic '{} - message: '{}'",topic,msg,t)
                 }
             }
-            client.subscribe("Aggregated/scan") { _, msg ->
-                this.currentGraph = mapper.readValue(msg.payload, ScanGraph::class.java)
+            client.subscribe("Aggregated/scan") { topic, msg ->
+                try {
+                    this.currentGraph = mapper.readValue(msg.payload, ScanGraph::class.java)
+                } catch (t: Throwable) {
+                    logger.warn("Skipping message due to error in topic '{} - message: '{}'",topic,msg,t)
+                }
+
             }
         }
         modifyTimer(true)
@@ -62,9 +72,13 @@ class ScanService(
     private fun aggregate() {
         val entries = HashSet<ScanReportMessage>()
         entries.addAll(reportQueue.toList())
-        reportQueue.removeAll(entries)
-        currentGraph = currentGraph.update(entries)
-        client.publish("Aggregated/scan",mapper.writeValueAsBytes(currentGraph),1,true)
+        if(entries.isNotEmpty()) {
+            reportQueue.removeAll(entries)
+            currentGraph = currentGraph.update(entries)
+            client.publish("Aggregated/scan",mapper.writeValueAsBytes(currentGraph),1,true)
+        } else {
+            logger.info("No scan-reports received during the last {} second(s)",scanIntervalSeconds)
+        }
     }
 
 }

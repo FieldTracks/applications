@@ -17,10 +17,10 @@ class Middleware(
 ) {
 
 
-    val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
-    val scanService = ScanService(client, scanIntervalSeconds)
+    private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
+    private val scanService = ScanService(client, scanIntervalSeconds)
 
-    val logger = LoggerFactory.getLogger(Middleware::class.java)
+    private val logger = LoggerFactory.getLogger(Middleware::class.java)
 
     fun start() {
         logger.error("Starting - connecting to server")
@@ -35,8 +35,11 @@ class Middleware(
         options.isAutomaticReconnect = true
         options.isCleanSession = true
         options.connectionTimeout = 10
+        options.isHttpsHostnameVerificationEnabled = true
+
         client.setCallback(object : MqttCallbackExtended {
             override fun connectionLost(cause: Throwable?) {
+                logger.warn("Connection Lost", cause)
                 scanService.connectionLost()
             }
             override fun messageArrived(topic: String?, message: MqttMessage?) { }
@@ -44,19 +47,31 @@ class Middleware(
             override fun deliveryComplete(token: IMqttDeliveryToken?) { }
 
             override fun connectComplete(reconnect: Boolean, serverURI: String?) {
+                if(reconnect) {
+                    logger.info("Re-connected to server")
+                } else {
+                    logger.info("Connected to server")
+                }
                 scanService.connectComplete(reconnect)
             }
         })
-        client.connect(options)
+
+        while(true) {
+            try {
+                client.connect(options);
+            } catch (t: Throwable) {
+                logger.error("Unable to connect to MQTT-Server - retrying in 10 seconds - '{}'", t.toString())
+                Thread.sleep(10_000)
+            }
+        }
+
     }
 
     class middleware:CliktCommand() {
-        val scanIntervalSeconds: Int by option("-i","--interval", help="Scan interval in seconds (default: 8)").int().default(8)
-
-        val mqttURL: String by option("-s","--server-url-mqtt", help = "MQTT Server c.f. https://www.eclipse.org/paho/clients/java/").default("tcp://localhost:1883")
-
-        val mqttUser: String? by option("-u","--user-mqtt", help = "MQTT User")
-        val mqttPassword: String? by option("-p","--password-mqtt", help = "MQTT Password")
+        private val scanIntervalSeconds: Int by option("-i","--interval", help="Scan interval in seconds (default: 8)").int().default(8)
+        private val mqttURL: String by option("-s","--server-url-mqtt", help = "MQTT Server c.f. https://www.eclipse.org/paho/clients/java/").default("tcp://localhost:1884")
+        private val mqttUser: String? by option("-u","--user-mqtt", help = "MQTT User")
+        private val mqttPassword: String? by option("-p","--password-mqtt", help = "MQTT Password")
 
         override fun run() {
             Middleware(scanIntervalSeconds,mqttURL,mqttUser,mqttPassword).start()

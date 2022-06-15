@@ -1,3 +1,5 @@
+package org.fieldtracks.middleware
+
 import org.eclipse.paho.client.mqttv3.*
 import org.fieldtracks.middleware.services.ScanService
 import org.slf4j.LoggerFactory

@@ -11,6 +11,8 @@ import java.util.*
 
 class Middleware(
     scanIntervalSeconds: Int,
+    reportMaxAge: Int,
+    beaconMaxAge: Int,
     mqttURL: String,
     private val mqttUser: String?,
     private val mqttPassword: String?,
@@ -18,7 +20,7 @@ class Middleware(
 
 
     private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
-    private val scanService = ScanService(client, scanIntervalSeconds)
+    private val scanService = ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge)
 
     private val logger = LoggerFactory.getLogger(Middleware::class.java)
 
@@ -34,7 +36,6 @@ class Middleware(
 
         options.isAutomaticReconnect = true
         options.isCleanSession = true
-        options.connectionTimeout = 10
         options.isHttpsHostnameVerificationEnabled = true
 
         client.setCallback(object : MqttCallbackExtended {
@@ -55,26 +56,19 @@ class Middleware(
                 scanService.connectComplete(reconnect)
             }
         })
-
-        while(true) {
-            try {
-                client.connect(options);
-            } catch (t: Throwable) {
-                logger.error("Unable to connect to MQTT-Server - retrying in 10 seconds - '{}'", t.toString())
-                Thread.sleep(10_000)
-            }
-        }
-
+        client.connect(options)
     }
 
     class middleware:CliktCommand() {
         private val scanIntervalSeconds: Int by option("-i","--interval", help="Scan interval in seconds (default: 8)").int().default(8)
-        private val mqttURL: String by option("-s","--server-url-mqtt", help = "MQTT Server c.f. https://www.eclipse.org/paho/clients/java/").default("tcp://localhost:1884")
+        private val beaconAgeSeconds: Int by option("-ba","--beacon-age-max", help="Time a beacon is offline before being excluded in seconds (default: 48 * 3600 = 172800)").int().default(172800)
+        private val maxReportAge: Int by option("-ra","--report-age-max", help="Maximum age of a scan report in seconds (default: 8)").int().default(30)
+        private val mqttURL: String by option("-s","--server-url-mqtt", help = "MQTT Server c.f. https://www.eclipse.org/paho/clients/java/").default("tcp://localhost:1883")
         private val mqttUser: String? by option("-u","--user-mqtt", help = "MQTT User")
         private val mqttPassword: String? by option("-p","--password-mqtt", help = "MQTT Password")
 
         override fun run() {
-            Middleware(scanIntervalSeconds,mqttURL,mqttUser,mqttPassword).start()
+            Middleware(scanIntervalSeconds, maxReportAge,beaconAgeSeconds,mqttURL,mqttUser,mqttPassword).start()
         }
     }
 

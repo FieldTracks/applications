@@ -18,6 +18,7 @@ dependencies {
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.3")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3")
     implementation("org.apache.logging.log4j:log4j-api:2.17.2")
     implementation("org.apache.logging.log4j:log4j-core:2.17.2")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
@@ -34,4 +35,5 @@ tasks.withType<KotlinCompile> {
 
 application {
     mainClass.set("org.fieldtracks.middleware.MainKt")
+    applicationDefaultJvmArgs = listOf("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED") // https://github.com/eclipse/paho.mqtt.java/issues/507#issuecomment-814681499
 }

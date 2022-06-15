@@ -49,12 +49,12 @@ class ScanService(
     @Synchronized
     fun modifyTimer(enableTimer: Boolean) {
         if(enableTimer) {
-            logger.info("Enabling timer")
+            logger.debug("Enabling timer")
             timer.scheduleAtFixedRate(timerTask {
                 aggregate()
             },scanIntervalSeconds * 1000L ,scanIntervalSeconds * 1000L)
         } else {
-            logger.info("Disabling timer")
+            logger.debug("Disabling timer")
             timer.cancel()
         }
     }

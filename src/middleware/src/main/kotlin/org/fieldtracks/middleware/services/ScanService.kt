@@ -135,7 +135,7 @@ data class ScanReportMessage (val stoneId: String,  val reportIdTimeStamp: Insta
             while(offset < content.size) {
                 val type = content[offset].toInt()
                 val rssi = content[offset +1].toInt() - 100
-                if(type + offset - 1 >= content.size ) {
+                if(type + offset  >= content.size ) {
                     logger.warn("Not enough data in report. Discarding beacon data - expected {} - actual: {}",type,content.size - offset -1)
                 } else {
                     val beaconId = BigInteger(1,content.sliceArray(offset+2 until offset+2+type))

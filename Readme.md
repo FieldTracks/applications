@@ -1,57 +1,79 @@
-This git repo contains all files needed to create a Docker image hosting an environment.
-Typically, environments can be started in the cloud or locally.
+# Fieldtracks Applications
 
-`run.sh` provides an example for starting a Docker container. It executes:
+This repository contains all applications that need to be deployed for running fieldtracks.
+
+* **middlware**: MQTT-Aggregator, Kotlin (Java) CLI-application
+* **fieldmon**: Frontend-application, Client-side Javascript
+* **StoneFlashtool**: Installer for JellingStone, controlled over MQTT
+
+### Development Notice
+
+This branch is under active development. Currently, there is nothing to create a releasable artifact.
+The general idea is created a Dockerimage including all applications - however, is is not created, yet.
+
+This branch implements the new wire protocol as discussed in https://fieldtracks.org/misc/2022/05/25/wire-protocol.html -
+however, the status of the individual applications varies.
+
+* **middlware** is rewritten from scratch and has reached feature parity with old Python-MQTT tools.
+It can aggregate scan data, simulate stones and handles naming.
+* **fieldmon** is not really functional. It is still based on the wire protocol and needs to be rewritten. This is the next step.
+* **StoneFlashtool** is not adapted to the new wire protocol, however, there's hardly anything to adapt.
+The perspective to replace this tool by a web-usb based installer for easier deployment and installation
+
+## Middlware
+
+Middleware is designed as a CLI-application that is deployed alongside the MQTT-Broker. Typically,
+it connects to localhost, whereby not needing any credentials. However, different connection-settings can be configured.
+
+### Building and Running
+
+Middleware is built using gradle. Using the [distribution plugin](https://docs.gradle.org/current/userguide/distribution_plugin.html), various artifacts (.zip, .tar, local dir ) can be created:
+
+#### Starting the application using gradle
+```bash
+$ cd src/middleware/
+./gradlew run
+```
+
+#### Creating and using a local distribution
+```bash
+$ cd src/middleware/
+$ ./gradlew clean installDist 
+
+BUILD SUCCESSFUL in 3s
+7 actionable tasks: 7 executed
+
+$ cd build/install/middleware/
+
+$ bin/middleware -h
+Usage: middleware [OPTIONS]
+
+Options:
+  -i, --interval INT          Scan interval in seconds (default: 8)
+  -ba, --beacon-age-max INT   Time a beacon is offline before being excluded
+                              in seconds (default: 48 * 3600 = 172800)
+  -ra, --report-age-max INT   Maximum age of a scan report in seconds
+                              (default: 8)
+  -s, --server-url-mqtt TEXT  MQTT Server c.f.
+                              https://www.eclipse.org/paho/clients/java/
+  -sim, --simulate INT...     Simulate stones, beacons - do not process
+                              reports
+  -u, --user-mqtt TEXT        MQTT User
+  -p, --password-mqtt TEXT    MQTT Password
+  -h, --help                  Show this message and exit
+
+```
+
+#### Creating releasable artefacts
 
 ```bash
-#!/bin/sh
-docker run \
-  --name fieldtracks \
-  --hostname local-dev.fieldtracks.org \
-  --rm \
-  -it \
-  -p 8485:80 \
-  -p 8883:8883 \
-  --mount type=bind,source="$(pwd)"/data,target=/data \
-  fieldtracks/fieldtracks:latest
+$ cd src/middleware/
+
+$ ./gradlew clean assembleDist
+
+$ ls -lh build/distributions/
+total 19M
+-rw-r--r-- 1 jan jan 9,7M Jun 16 20:22 middleware-1.0-SNAPSHOT.tar
+-rw-r--r-- 1 jan jan 8,7M Jun 16 20:22 middleware-1.0-SNAPSHOT.zip
+
 ```
-
-The data-directory contains the configuration, the key material and messages persisted message in mosquitto.
-During start, a the resulting Docker container generates and logs random password for mqtt users (stone, admin).
-
-*Note: A valid TLS certificate (Let's encrypt) for local-dev.fieldtracks.org is available at https://git.freifunk-koeln.de/FieldTracks/local-dev-cert/-/jobs/artifacts/master/browse?job=deploy (team members only)*.
-
-An [easy-rsa](https://github.com/OpenVPN/easy-rsa) base certificate authority (CA) is generated during boot.
-Its key material is used by JellingStone devices. Hence, it is also used by mosquittos mqtt listeners and apache2.
-
-The resulting image starts an apache2-deamon handing out JWT tokens. By default, Apache's TLS listener also uses
-the certificates provided by easy-rsa. To use a valid certificate, you can either install the easy-rsa one in your local
-browser (preferred for a development enviroment) or utilize valid TLS certificates gathered from Let's encrypt.
-The latter requires an additional container (for production use,
-e.g. https://github.com/matrix-org/docker-dehydrated).
-
-
-The data-volume is designed to be bound to a directory, because some files can be edited or read by hand:
-* `passwd` list all user accounts, which are valid for jwt. It is edited through htpasswd.
-In general, admins, users and stones have different permission on the various mqtt-topis.
-* `etc/tls` contains links to the TLS certificates used by mosquitto. Changing these results in a different mosquitto configuration
-* `etc/mqtt/mosquitto_passwd` contains accounts for mosquitto. When mosquitto is going to utilizes jwt-tokens, this file is not needed anymore.
-* `etc/mqtt/mqtt_passwd_stone_clear.txt` has
-* `etc/apache/vhosts.conf` has Apache's vhost configuration.
-* `log/` contains log-output from both mosquitto and apache2.
-
-## SSH-Configuration
-
-The resulting container generates SSH-keys on boot. Persisting keys across container re-recreation
-requires addtional volumes, but avoid bind-mounts to maintain the existing configuration.
-```
---mount source=ft-ssh,destination=/etc/ssh \
-```
-However, a bind mount can be ideal to hook in your personal SSH-key; it must belong to root.
-```
---mount type=bind,source=/path/to/.ssh/id_rsa.pub,destination=/root/.ssh/authorized_keys \
-```
-
-
-## Building the container
-The container is build by executing `make`. Corresponding sources are available in `./src`.  

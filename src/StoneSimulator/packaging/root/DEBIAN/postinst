@@ -1,9 +1,0 @@
-#!/bin/sh
-set -e
-echo 'Installing python3 dependencies...'
-pip3 install -r /usr/share/stonesimulator/requirements.txt
-echo 'Setting up service...'
-deb-systemd-helper debian-installed stonesimulator.service || true
-deb-systemd-helper enable stonesimulator.service || true
-deb-systemd-helper update-state stonesimulator.service
-

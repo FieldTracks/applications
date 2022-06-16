@@ -38,7 +38,7 @@ class Middleware(
     private val logger = LoggerFactory.getLogger(Middleware::class.java)
 
     fun start() {
-        logger.error("Starting - connecting to server")
+        logger.info("Starting - connecting to server")
         val options = MqttConnectOptions()
         options.serverURIs = arrayOf(mqttURL)
         if(mqttUser != null) {

@@ -18,7 +18,6 @@ class Middleware(
     private val mqttPassword: String?,
 ) {
 
-
     private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
     private val scanService = ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge)
 

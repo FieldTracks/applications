@@ -8,11 +8,6 @@ import org.slf4j.LoggerFactory
 import java.math.BigInteger
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-import java.time.temporal.Temporal
-import java.time.temporal.TemporalAmount
-import java.time.temporal.TemporalUnit
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.ArrayList
@@ -48,7 +43,7 @@ class ScanService(
                     val stone = topic.removePrefix("JellingStone/scan/")
                     val parsed = ScanReportMessage.parse(stone, msg.payload)
                     if(parsed != null) {
-                        if(parsed.age_in_seconds() > maxReportAgeSeconds) {
+                        if(parsed.ageInSeconds() > maxReportAgeSeconds) {
                             logger.info("Older than {} seconds - discarding: '{}'",maxReportAgeSeconds,parsed)
                         } else {
                             reportQueue.add(parsed)
@@ -104,7 +99,7 @@ class ScanService(
 
 data class ScanReportMessage (val stoneId: String,  val reportIdTimeStamp: Instant, val messageSeqNum: Int, val beaconData: List<ScanReportBeaconData>) {
 
-    fun age_in_seconds(): Long {
+    fun ageInSeconds(): Long {
         return Duration.between(reportIdTimeStamp,Instant.now()).seconds
     }
 
@@ -158,8 +153,8 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
     }
 
     fun update(newReports: Set<ScanReportMessage>, maxBeaconAgeSeconds: Int): ScanGraph {
-        logger.debug("Updating graph - new data: '{}'",newReports)
-        logger.debug("Old Graph '{}'",this)
+        logger.trace("Updating graph - new data: '{}'",newReports)
+        logger.trace("Old Graph '{}'",this)
 
 
         val newGraph = ScanGraph(ArrayList(), ArrayList())
@@ -169,7 +164,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         val oldLinks = this.links.associateBy { it.target }.toMutableMap() // Convention - the target is always the beacon
         val oldNodes = this.nodes.associateBy { it.id }.toMutableMap()
 
-        logger.debug("Associating each beacon with all detected RSSIs")
+        logger.trace("Associating each beacon with all detected RSSIs")
         newReports.forEach { report ->
             logger.debug("Processing report from '{}': ID: '{}', MID: '{}'",report.stoneId,report.reportIdTimeStamp,report.messageSeqNum)
             oldNodes.remove(report.stoneId)
@@ -184,7 +179,6 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
             }
         }
 
-        logger.debug("Building graph by strongest RSSI")
         beaconIDs.forEach { beaconId ->
             // Report only the strongest stone
             val bestReport = rssiMap[beaconId]!!.maxByOrNull { it.first }!!
@@ -210,7 +204,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
                 }
             }
         }
-        logger.debug("Emitting new Graph {}", newGraph)
+        logger.trace("Emitting new Graph {}", newGraph)
         return newGraph
     }
 }

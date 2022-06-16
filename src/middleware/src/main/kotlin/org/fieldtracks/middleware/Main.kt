@@ -1,10 +1,14 @@
 package org.fieldtracks.middleware
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.int
 import org.eclipse.paho.client.mqttv3.*
+import org.fieldtracks.middleware.services.NameService
 import org.fieldtracks.middleware.services.ScanService
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -19,8 +23,10 @@ class Middleware(
 ) {
 
     private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
-    private val scanService = ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge)
-
+    private val services = listOf(
+        ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge),
+        NameService(client)
+    )
     private val logger = LoggerFactory.getLogger(Middleware::class.java)
 
     fun start() {
@@ -41,7 +47,7 @@ class Middleware(
         client.setCallback(object : MqttCallbackExtended {
             override fun connectionLost(cause: Throwable?) {
                 logger.warn("Connection Lost", cause)
-                scanService.connectionLost()
+                services.forEach { it.connectionLost()}
             }
             override fun messageArrived(topic: String?, message: MqttMessage?) { }
 
@@ -53,7 +59,8 @@ class Middleware(
                 } else {
                     logger.info("Connected to server")
                 }
-                scanService.connectComplete(reconnect)
+                services.forEach { it.connectCompleted(reconnect)}
+
             }
         })
         while(true) {
@@ -67,6 +74,10 @@ class Middleware(
             Thread.sleep(10_000)
         }
     }
+}
+
+fun createObjectMapper(): ObjectMapper {
+    return  ObjectMapper().registerKotlinModule().registerModule(JavaTimeModule())!!
 }
 
 fun main(args: Array<String>) {

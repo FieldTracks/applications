@@ -117,10 +117,8 @@ class ScanGraphUpdateTest {
             GraphLink(source = "stone-42", target = "ff",-23,false)
         )
 
-
         assertEquals(nodesInGraph, newResult.nodes)
         assertEquals(nodesInGraph, oldResult.nodes)
-
         assertEquals(oldLinksInGraph, oldResult.links)
         assertEquals(newLinksInGraph, newResult.links)
     }

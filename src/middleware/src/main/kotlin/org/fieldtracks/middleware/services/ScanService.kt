@@ -1,42 +1,33 @@
 package org.fieldtracks.middleware.services
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.eclipse.paho.client.mqttv3.IMqttClient
+import org.fieldtracks.middleware.createObjectMapper
 import org.slf4j.LoggerFactory
 import java.math.BigInteger
 import java.time.Duration
 import java.time.Instant
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
-import kotlin.concurrent.timerTask
 
 class ScanService(
     private val client: IMqttClient,
     private val scanIntervalSeconds: Int,
     private val maxReportAgeSeconds: Int,
     private val maxBeaconAgeSeconds: Int,
-) {
+): ScheduledServiceBase(scanIntervalSeconds,scanIntervalSeconds) {
 
-    private val timer: Timer = Timer()
     private val logger = LoggerFactory.getLogger(ScanService::class.java)
 
-    private val mapper = ObjectMapper().registerKotlinModule().registerModule(JavaTimeModule())
+    private val mapper = createObjectMapper()
     private val reportQueue = ConcurrentLinkedQueue<ScanReportMessage>()
-    private val statistics = ScanServiceStatistics(client)
 
     @Volatile
     private var currentGraph = ScanGraph(ArrayList(), ArrayList())
 
-    fun connectionLost() {
-        modifyTimer(false)
-    }
 
-    fun connectComplete(reconnect: Boolean) {
+    override fun onMqttConnected(reconnect: Boolean) {
         if(!reconnect) {
             client.subscribe("JellingStone/scan/#") { topic, msg ->
                 try {
@@ -65,24 +56,8 @@ class ScanService(
         modifyTimer(true)
     }
 
-    @Synchronized
-    fun modifyTimer(enableTimer: Boolean) {
-        if(enableTimer) {
-            logger.debug("Enabling timer")
-            timer.scheduleAtFixedRate(timerTask {
-                try {
-                    aggregate()
-                } catch (t: Throwable){
-                    logger.error("Error aggregating data ", t)
-                }
-            },scanIntervalSeconds * 1000L ,scanIntervalSeconds * 1000L)
-        } else {
-            logger.debug("Disabling timer")
-            timer.cancel()
-        }
-    }
 
-    private fun aggregate() {
+    override fun onTimerTriggered() {
         val entries = HashSet<ScanReportMessage>()
         entries.addAll(reportQueue.toList())
         if(entries.isNotEmpty()) {
@@ -92,7 +67,6 @@ class ScanService(
         } else {
             logger.info("No scan-reports received during the last {} second(s)",scanIntervalSeconds)
         }
-        statistics.update(entries)
     }
 
 }

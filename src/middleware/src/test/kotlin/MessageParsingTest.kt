@@ -16,7 +16,7 @@ class MessageParsingTest {
     @Test
     fun parseEmptyMessage() {
         val report = ScanReportMessage.parse(stoneId,loadFile("empty_report.bin"))!!
-        val timeStamp = ZonedDateTime.of(2022, 6, 13, 19, 40, 2, 0, ZoneId.of("Z")).toInstant()
+        val timeStamp = ZonedDateTime.of(2022, 6, 13, 19, 40, 2, 0, ZoneId.of("UTC")).toInstant()
 
         assertEquals(stoneId,report.stoneId)
         assertEquals(timeStamp,report.reportIdTimeStamp)

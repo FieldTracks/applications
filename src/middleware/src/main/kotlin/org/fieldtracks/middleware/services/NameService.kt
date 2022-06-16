@@ -33,13 +33,13 @@ class NameService(
             }
         }
         if(changes) {
-            client.publish("names/aggregated",mapper.writeValueAsBytes(currentNameMap),1,true)
+            client.publish("Aggregated/Names",mapper.writeValueAsBytes(currentNameMap),1,true)
         }
     }
 
     override fun onMqttConnected(reconnect: Boolean) {
         if(!reconnect) {
-            client.subscribe("names/updates") { _, data ->
+            client.subscribe("Names/updates") { _, data ->
                 if(data == null ) {
                     logger.warn("Ignoring empty update message")
                 } else {
@@ -68,8 +68,6 @@ class NameService(
             }
         }
     }
-
-
 }
 
 data class NameUpdate(val id: String?, val name: String?)

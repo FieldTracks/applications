@@ -89,9 +89,10 @@ data class ScanReportMessage (val stoneId: String,  val reportIdTimeStamp: Insta
                 logger.warn("Invalid report version {} - discarding message", content[0])
                 null
             } else {
+                val timestamp = Instant.ofEpochSecond(BigInteger(content.sliceArray(1..4)).toLong())
                 ScanReportMessage(
                     stoneId = stone,
-                    reportIdTimeStamp =  Instant.ofEpochSecond(BigInteger(content.sliceArray(1..4)).toLong()),
+                    reportIdTimeStamp = timestamp,
                     messageSeqNum = content[5].toInt(),
                     beaconData = parseData(content)
                 )

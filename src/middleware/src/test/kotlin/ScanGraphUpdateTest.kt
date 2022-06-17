@@ -11,7 +11,7 @@ class ScanGraphUpdateTest {
     @Test
     fun emptyGraphNoUpdate() {
         val emptyGraph = ScanGraph(ArrayList(), ArrayList())
-        val result = emptyGraph.update(emptySet(), Int.MAX_VALUE)
+        val result = emptyGraph.update(emptySet(), Int.MAX_VALUE) { it }
         assertEquals(emptyGraph,result)
     }
 
@@ -21,11 +21,11 @@ class ScanGraphUpdateTest {
         val emptyGraph = ScanGraph(ArrayList(), ArrayList())
         val newBeacon = ScanReportBeaconData(type = 1, rssi = -42, id = BigInteger("FF",16))
         val report1 = ScanReportMessage("stone-23", stmp,-1, listOf(newBeacon))
-        val result = emptyGraph.update(setOf(report1), Int.MAX_VALUE)
+        val result = emptyGraph.update(setOf(report1), Int.MAX_VALUE) { it }
 
         val nodesInGraph = listOf(
-            GraphNode("stone-23",stmp, offline = false, stone = true),
-            GraphNode("ff",stmp, offline = false, stone = false)
+            GraphNode("stone-23","stone-23",stmp, offline = false, stone = true),
+            GraphNode("ff","ff",stmp, offline = false, stone = false)
         )
 
         val linksInGraph = listOf(
@@ -44,12 +44,12 @@ class ScanGraphUpdateTest {
         val report1 = ScanReportMessage("stone-23", stmp,-1, listOf(newBeacon))
         val report2 = ScanReportMessage("stone-23", stmp,-1, emptyList())
         val result = emptyGraph
-            .update(setOf(report1), Int.MAX_VALUE)
-            .update(setOf(report2), Int.MAX_VALUE)
+            .update(setOf(report1), Int.MAX_VALUE)  { it }
+            .update(setOf(report2), Int.MAX_VALUE)  { it }
 
         val nodesInGraph = listOf(
-            GraphNode("stone-23",stmp, offline = false, stone = true),
-            GraphNode("ff",stmp, offline = true, stone = false)
+            GraphNode("stone-23","stone-23",stmp, offline = false, stone = true),
+            GraphNode("ff","ff",stmp, offline = true, stone = false)
         )
 
         val linksInGraph = listOf(
@@ -67,12 +67,12 @@ class ScanGraphUpdateTest {
         val newBeacon = ScanReportBeaconData(type = 1, rssi = -42, id = BigInteger("FF",16))
         val report1 = ScanReportMessage("stone-23", stmp,-1, listOf(newBeacon))
         val result = emptyGraph
-            .update(setOf(report1), Int.MAX_VALUE)
-            .update(emptySet(), Int.MAX_VALUE)
+            .update(setOf(report1), Int.MAX_VALUE) {it}
+            .update(emptySet(), Int.MAX_VALUE) {it}
 
         val nodesInGraph = listOf(
-            GraphNode("stone-23",stmp, offline = true, stone = true),
-            GraphNode("ff",stmp, offline = true, stone = false)
+            GraphNode("stone-23","stone-23",stmp, offline = true, stone = true),
+            GraphNode("ff","ff",stmp, offline = true, stone = false)
         )
 
         val linksInGraph = listOf(
@@ -101,13 +101,13 @@ class ScanGraphUpdateTest {
         )
 
 
-        val oldResult = emptyGraph.update(oldReports, Int.MAX_VALUE)
-        val newResult = oldResult.update(newReports, Int.MAX_VALUE)
+        val oldResult = emptyGraph.update(oldReports, Int.MAX_VALUE) {it}
+        val newResult = oldResult.update(newReports, Int.MAX_VALUE) {it}
 
         val nodesInGraph = listOf(
-            GraphNode("stone-23",stmp, offline = false, stone = true),
-            GraphNode("stone-42",stmp, offline = false, stone = true),
-            GraphNode("ff",stmp, offline = false, stone = false)
+            GraphNode("stone-23","stone-23",stmp, offline = false, stone = true),
+            GraphNode("stone-42","stone-42",stmp, offline = false, stone = true),
+            GraphNode("ff","ff",stmp, offline = false, stone = false)
         )
 
         val oldLinksInGraph = listOf(

@@ -85,6 +85,9 @@ class NameService(
         }
     }
 
+    fun resolve(id: String): String {
+        return currentNameMap.nameById[id] ?: id
+    }
 }
 
 data class NameUpdate(val id: String?, val name: String?)

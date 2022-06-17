@@ -14,6 +14,7 @@ import org.eclipse.paho.client.mqttv3.*
 import org.fieldtracks.middleware.services.NameService
 import org.fieldtracks.middleware.services.ScanService
 import org.fieldtracks.middleware.services.SimulatorService
+import org.fieldtracks.middleware.services.StoneStatusService
 import org.slf4j.LoggerFactory
 import java.util.*
 
@@ -30,10 +31,13 @@ class Middleware(
 ) {
 
     private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
+    private val nameService = NameService(client, flushNames = flushNames)
+
     private val services = listOf(
-        NameService(client, flushNames = flushNames),
+        nameService,
+        StoneStatusService(client, scanIntervalSeconds),
         if(simulate == null) {
-            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph)
+            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph, nameService::resolve)
         } else {
             SimulatorService(client,scanIntervalSeconds,simulate.first,simulate.second, flushGraph = flushGraph)
         }

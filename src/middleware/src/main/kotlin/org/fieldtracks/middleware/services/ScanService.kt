@@ -14,7 +14,8 @@ class ScanService(
     private val scanIntervalSeconds: Int,
     private val maxReportAgeSeconds: Int,
     private val maxBeaconAgeSeconds: Int,
-    @Volatile private var flushGraph: Boolean
+    @Volatile private var flushGraph: Boolean,
+    private val nameResolver: (String) -> String
 ): ScheduledServiceBase(scanIntervalSeconds,scanIntervalSeconds) {
 
     private val logger = LoggerFactory.getLogger(ScanService::class.java)
@@ -70,7 +71,7 @@ class ScanService(
         entries.addAll(reportQueue.toList())
         if(entries.isNotEmpty()) {
             reportQueue.removeAll(entries)
-            currentGraph = currentGraph.update(entries,maxBeaconAgeSeconds)
+            currentGraph = currentGraph.update(entries,maxBeaconAgeSeconds,nameResolver)
             publishCurrentGraph()
         } else {
             logger.info("No scan-reports received during the last {} second(s)",scanIntervalSeconds)

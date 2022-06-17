@@ -10,7 +10,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         val logger = LoggerFactory.getLogger(ScanGraph::class.java)!!
     }
 
-    fun update(newReports: Set<ScanReportMessage>, maxBeaconAgeSeconds: Int): ScanGraph {
+    fun update(newReports: Set<ScanReportMessage>, maxBeaconAgeSeconds: Int, nameResolver: (String) -> String): ScanGraph {
         logger.trace("Updating graph - new data: '{}'",newReports)
         logger.trace("Old Graph '{}'",this)
 
@@ -26,7 +26,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         newReports.forEach { report ->
             logger.debug("Processing report from '{}': ID: '{}', MID: '{}'",report.stoneId,report.reportIdTimeStamp,report.messageSeqNum)
             oldNodes.remove(report.stoneId)
-            newGraph.nodes.add(GraphNode(report.stoneId, report.reportIdTimeStamp, offline = false, stone = true))
+            newGraph.nodes.add(GraphNode(report.stoneId, nameResolver(report.stoneId), report.reportIdTimeStamp, offline = false, stone = true))
             report.beaconData.forEach { beacon ->
                 val idStr = beacon.id.toString(16)
                 oldNodes.remove(idStr)
@@ -40,7 +40,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         beaconIDs.forEach { beaconId ->
             // Report only the strongest stone
             val bestReport = rssiMap[beaconId]!!.maxByOrNull { it.first }!!
-            newGraph.nodes += GraphNode(beaconId,bestReport.second.reportIdTimeStamp, offline = false, stone = false)
+            newGraph.nodes += GraphNode(beaconId, nameResolver(beaconId),bestReport.second.reportIdTimeStamp, offline = false, stone = false)
             val link = GraphLink(
                 source = bestReport.second.stoneId,
                 target = beaconId,
@@ -51,7 +51,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         }
 
         oldNodes.values.forEach {
-            newGraph.nodes += it.copy(offline = true)
+            newGraph.nodes += it.copy(offline = true, name = nameResolver(it.id))
             if(!it.stone) { // Ignore links of offline stones - care about the beacon, only
                 val link = oldLinks[it.id] // Ignore inconsistencies
                 if(it.ageInSeconds() > maxBeaconAgeSeconds) {
@@ -69,6 +69,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
 
 data class GraphNode(
     val id: String,
+    val name: String,
     val lastSeen: Instant,
     val offline: Boolean,
     val stone: Boolean,

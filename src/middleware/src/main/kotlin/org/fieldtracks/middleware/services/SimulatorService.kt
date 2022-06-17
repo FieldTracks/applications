@@ -6,7 +6,6 @@ import org.fieldtracks.middleware.model.GraphLink
 import org.fieldtracks.middleware.model.GraphNode
 import org.fieldtracks.middleware.model.ScanGraph
 import org.slf4j.LoggerFactory
-import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
 import kotlin.collections.ArrayList
@@ -43,9 +42,9 @@ class SimulatorService(
 
 
         val graphNodes = stoneNodes.map {
-            GraphNode(id = it, lastSeen = now, offline = false, stone = true)
+            GraphNode(id = it, lastSeen = now, offline = false, stone = true, name = it)
         } + beaconNodes.map {
-            GraphNode(id = it, lastSeen = now, offline = false, stone = false)
+            GraphNode(id = it, lastSeen = now, offline = false, stone = false, name = it)
         }
 
         val graphLinks = beaconNodes.map {

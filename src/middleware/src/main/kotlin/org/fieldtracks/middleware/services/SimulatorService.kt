@@ -6,9 +6,12 @@ import org.fieldtracks.middleware.model.GraphLink
 import org.fieldtracks.middleware.model.GraphNode
 import org.fieldtracks.middleware.model.ScanGraph
 import org.slf4j.LoggerFactory
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
-import java.util.concurrent.ThreadLocalRandom
+import kotlin.collections.ArrayList
+import kotlin.random.Random
+import kotlin.random.asJavaRandom
 
 class SimulatorService(
     private val client: IMqttClient,
@@ -18,16 +21,21 @@ class SimulatorService(
     @Volatile private var flushGraph: Boolean
 ): ScheduledServiceBase(initialDelaySeconds = scanIntervalSeconds, intervalSeconds = scanIntervalSeconds) {
 
-    private val rnd = ThreadLocalRandom.current()
+    private val macRandomness = Random(42).asJavaRandom()
+    private val rssiRandomness = Random(23)
+    private val beaconTypeRandomness = Random(4711)
+    private val beaconIdRandomness = Random(0).asJavaRandom()
+    private val linkRandomness = Random(1)
+
     private val mapper = createObjectMapper()
     private val logger = LoggerFactory.getLogger(SimulatorService::class.java)
 
     private val stoneNodes = (1..stoneCnt).map {
-            BigInteger(48,1,rnd).toString(16) // 48-Bit Mac
+            randomMac()
     }
 
     private val beaconNodes = (1 .. beaconCnt). map {
-        BigInteger(48,1,rnd).toString(16) // 6-Byte instance-id, own namespace
+        randomBeacon()
     }
 
     override fun onTimerTriggered() {
@@ -42,9 +50,9 @@ class SimulatorService(
 
         val graphLinks = beaconNodes.map {
             GraphLink(
-                source = stoneNodes[rnd.nextInt(0,stoneCnt)],
+                source = stoneNodes[linkRandomness.nextInt(0,stoneCnt)],
                 target = it,
-                detectedRssi = rnd.nextInt(-90,-30),
+                detectedRssi = rssiRandomness.nextInt(-90,-30),
                 offline = false
             )
         }
@@ -66,7 +74,25 @@ class SimulatorService(
         } catch(e: Exception) {
             logger.error("Error publishing simulated graph", e)
         }
+    }
 
+    private fun randomMac():String {
+        val c = BigInteger(48,0,macRandomness).toByteArray()
+        return String.format("%02x:%02x:%02x:%02x:%02x:%02x",c[0],c[1],c[2],c[3],c[4],c[5])
 
     }
+
+    private fun randomBeacon(): String {
+        val type = beaconTypeRandomness.nextInt(10)
+        val id = when(type) {
+            0 -> 20 // Alt-Beacon
+            1 -> 16 // Eddystone, other network
+            2 -> 1 // Eddystone, small instance
+            3 -> 6 // Eddystone, full instance
+            else -> 2 // Eddystone, 2-Byte instance
+        }
+        return BigInteger(id*8,0,beaconIdRandomness).toString(16)
+
+    }
+
 }

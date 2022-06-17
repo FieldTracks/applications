@@ -15,8 +15,8 @@ class NameService(
     private val reportQueue = LinkedBlockingQueue<NameUpdate>()
     private val logger = LoggerFactory.getLogger(NameService::class.java)
 
-    @Volatile
-    private var currentNameMap = AggregatedNames(ConcurrentHashMap())
+
+    private val currentNameMap = AggregatedNames(ConcurrentHashMap())
 
     private val aggregatedTopic = "Names/aggregated"
 
@@ -68,7 +68,8 @@ class NameService(
                     logger.warn("Ignoring empty aggregation message")
                 } else {
                     try {
-                        currentNameMap = mapper.readValue(data.payload, AggregatedNames::class.java)
+                        val persistedMap = mapper.readValue(data.payload, AggregatedNames::class.java)
+                        currentNameMap.nameById.putAll(persistedMap.nameById)
                     } catch (e: Exception) {
                         logger.warn("Error parsing aggregated names '{}'", data,e)
                     }

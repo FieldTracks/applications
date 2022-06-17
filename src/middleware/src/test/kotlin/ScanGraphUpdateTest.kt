@@ -1,6 +1,6 @@
 package org.fieldtracks.middleware
 
-import org.fieldtracks.middleware.services.*
+import org.fieldtracks.middleware.model.*
 import java.math.BigInteger
 import java.time.Instant
 import kotlin.test.Test

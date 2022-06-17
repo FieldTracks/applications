@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.pair
 import com.github.ajalt.clikt.parameters.types.int
@@ -23,16 +24,18 @@ class Middleware(
     private val mqttURL: String,
     private val mqttUser: String?,
     private val mqttPassword: String?,
-    simulate: Pair<Int,Int>?
+    simulate: Pair<Int,Int>?,
+    flushNames: Boolean,
+    flushGraph: Boolean
 ) {
 
     private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
     private val services = listOf(
-        NameService(client),
+        NameService(client, flushNames = flushNames),
         if(simulate == null) {
-            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge)
+            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph)
         } else {
-            SimulatorService(client,scanIntervalSeconds,simulate.first,simulate.second)
+            SimulatorService(client,scanIntervalSeconds,simulate.first,simulate.second, flushGraph = flushGraph)
         }
     )
     private val logger = LoggerFactory.getLogger(Middleware::class.java)
@@ -101,12 +104,20 @@ class middleware:CliktCommand() {
     private val maxReportAge: Int by option("-ra","--report-age-max", help="Maximum age of a scan report in seconds (default: 8)").int().default(30)
     private val mqttURL: String by option("-s","--server-url-mqtt", help = "MQTT Server c.f. https://www.eclipse.org/paho/clients/java/").default("tcp://localhost:1883")
     private val simulate: Pair<Int,Int>? by option("-sim","--simulate", help = "Simulate stones, beacons - do not process reports").int().pair()
-
     private val mqttUser: String? by option("-u","--user-mqtt", help = "MQTT User")
     private val mqttPassword: String? by option("-p","--password-mqtt", help = "MQTT Password")
-
+    private val flushNames: Boolean by option("-fn","--flush-names", help = "Flush aggregated names in topic").flag(default = false)
+    private val flushGraph: Boolean by option("-fg","--flush-graph", help = "Flush aggregated graph in topic").flag(default = false)
     override fun run() {
-        Middleware(scanIntervalSeconds, maxReportAge,beaconAgeSeconds,mqttURL,mqttUser,mqttPassword,simulate).start()
+        Middleware(scanIntervalSeconds = scanIntervalSeconds,
+            reportMaxAge = maxReportAge,
+            beaconMaxAge = beaconAgeSeconds,
+            mqttURL = mqttURL,
+            mqttUser = mqttUser,
+            mqttPassword = mqttPassword,
+            simulate = simulate,
+            flushNames = flushNames,
+            flushGraph = flushGraph).start()
     }
 }
 

@@ -7,7 +7,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 
 class NameService(
-    private val client: IMqttClient
+    private val client: IMqttClient,
+    @Volatile private var flushNames: Boolean
 ):ScheduledServiceBase(initialDelaySeconds = 8, intervalSeconds = 1) {
 
     private val mapper = createObjectMapper()
@@ -16,6 +17,8 @@ class NameService(
 
     @Volatile
     private var currentNameMap = AggregatedNames(ConcurrentHashMap())
+
+    private val aggregatedTopic = "Names/aggregated"
 
     override fun onTimerTriggered() {
         val elements = mutableListOf(reportQueue.take()) // Blocking wait until one message arrives
@@ -33,12 +36,17 @@ class NameService(
             }
         }
         if(changes) {
-            client.publish("Aggregated/Names",mapper.writeValueAsBytes(currentNameMap),1,true)
+            publishCurrentMap()
         }
     }
 
     override fun onMqttConnected(reconnect: Boolean) {
         if(!reconnect) {
+            if(flushNames) {
+                publishCurrentMap()
+                flushNames = false
+            }
+
             client.subscribe("Names/updates") { _, data ->
                 if(data == null ) {
                     logger.warn("Ignoring empty update message")
@@ -55,7 +63,7 @@ class NameService(
                     }
                 }
             }
-            client.subscribe("names/aggregated") {_, data ->
+            client.subscribe(aggregatedTopic) {_, data ->
                 if(data == null ) {
                     logger.warn("Ignoring empty aggregation message")
                 } else {
@@ -68,6 +76,15 @@ class NameService(
             }
         }
     }
+
+    private fun publishCurrentMap() {
+        try {
+            client.publish(aggregatedTopic,mapper.writeValueAsBytes(currentNameMap),1,true)
+        } catch (e: Exception) {
+            logger.error("Error publishing aggregated names", e)
+        }
+    }
+
 }
 
 data class NameUpdate(val id: String?, val name: String?)

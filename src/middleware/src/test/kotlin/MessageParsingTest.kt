@@ -1,7 +1,7 @@
 package org.fieldtracks.middleware
 
-import org.fieldtracks.middleware.services.ScanReportBeaconData
-import org.fieldtracks.middleware.services.ScanReportMessage
+import org.fieldtracks.middleware.model.ScanReportBeaconData
+import org.fieldtracks.middleware.model.ScanReportMessage
 import java.math.BigInteger
 import java.time.ZoneId
 import java.time.ZonedDateTime

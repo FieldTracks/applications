@@ -41,13 +41,11 @@ class ScanService(
             client.subscribe("JellingStone/scan/#") { topic, msg ->
                 try {
                     val stone = topic.removePrefix("JellingStone/scan/")
-                    val parsed = ScanReportMessage.parse(stone, msg.payload)
-                    if(parsed != null) {
-                        if(parsed.ageInSeconds() > maxReportAgeSeconds) {
-                            logger.info("Older than {} seconds - discarding: '{}'",maxReportAgeSeconds,parsed)
-                        } else {
-                            reportQueue.add(parsed)
-                        }
+                    val parsed = ScanReportMessage.parse(stone, msg.payload)!!
+                    if(parsed.ageInSeconds() > maxReportAgeSeconds) {
+                        logger.info("Older than {} seconds - discarding: '{}'",maxReportAgeSeconds,parsed)
+                    } else {
+                        reportQueue.add(parsed)
                     }
                 } catch (t: Throwable) {
                     logger.warn("Skipping message due to error in topic '{} - message: '{}'",topic,msg,t)

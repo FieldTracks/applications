@@ -1,6 +1,5 @@
 package org.fieldtracks.middleware.services
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import org.eclipse.paho.client.mqttv3.IMqttClient
 import org.fieldtracks.middleware.createObjectMapper
 import org.slf4j.LoggerFactory
@@ -50,30 +49,30 @@ data class AggregatedStatusReport(
 )
 
 data class StoneStatusReport(
-    @JsonProperty("app_info") val appInfo: StoneStatusReportAppDesc,
-    @JsonProperty("mem_info") val memInfo: StoneStatusReportMemInfo,
+    val appInfo: StoneStatusReportAppDesc,
+    val memInfo: StoneStatusReportMemInfo,
     val nvs: StoneStatusReportNVS,
-    @JsonProperty("date_time") val timestamp: Instant,
-    @JsonProperty("uptime_seconds") val uptimeSeconds: Number,
+    val timestamp: Instant,
+    val uptimeSeconds: Number,
 )
 
 data class StoneStatusReportAppDesc(
     val version: String,
-    @JsonProperty("project_name") val projectName: String,
+    val projectName: String,
     val time: String,
     val date: String,
-    @JsonProperty("idf_ver") val idfVersion: String,
+    val idfVersion: String,
 )
 
 data class StoneStatusReportMemInfo(
-    @JsonProperty("free_heap_size") val freeHeapSize: Double,
-    @JsonProperty("min_heap_size") val min_heap_size: Double,
+    val freeHeapSize: Double,
+    val minHeapSize: Double,
 )
 
 data class StoneStatusReportNVS(
-    @JsonProperty("WLAN_SSID") val wlanSsid: String,
-    @JsonProperty("MQTT_URL") val mqttUrl: String,
-    @JsonProperty("MQTT_USER") val mqttUser: String,
-    @JsonProperty("BLE_EDDY_ORG") val eddystoneNamespaceId: String,
-    @JsonProperty("BLE_EDDY_INST") val eddystoneInstanceId: String,
+    val wlanSsid: String,
+    val mqttUrl: String,
+    val mqttUser: String,
+    val eddystoneNamespace: String,
+    val eddystoneInstanceId: String,
 )

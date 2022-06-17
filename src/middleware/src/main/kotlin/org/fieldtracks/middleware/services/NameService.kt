@@ -29,7 +29,7 @@ class NameService(
         var changes = false
 
         elements.forEach {
-            if(currentNameMap.nameById[it.id!!] != it.name) {
+            if(currentNameMap.nameById[it.id] != it.name) {
                 currentNameMap.nameById[it.id] = it.name
                 logger.info("Renaming: '{}'",it)
                 changes = true
@@ -48,31 +48,19 @@ class NameService(
             }
 
             client.subscribe("Names/updates") { _, data ->
-                if(data == null ) {
-                    logger.warn("Ignoring empty update message")
-                } else {
                     try {
                         val updateMsg = mapper.readValue(data.payload,NameUpdate::class.java)
-                        if(updateMsg.id == null || updateMsg.id.isBlank()) {
-                            logger.warn("Update-Message has empty id - ignoring - data: '{}'",updateMsg)
-                        } else {
-                            reportQueue.add(updateMsg)
-                        }
+                        reportQueue.add(updateMsg)
                     } catch (e: Exception) {
                         logger.warn("Error applying name-update '{}'", data,e)
                     }
-                }
             }
             client.subscribe(aggregatedTopic) {_, data ->
-                if(data == null ) {
-                    logger.warn("Ignoring empty aggregation message")
-                } else {
-                    try {
-                        val persistedMap = mapper.readValue(data.payload, AggregatedNames::class.java)
-                        currentNameMap.nameById.putAll(persistedMap.nameById)
-                    } catch (e: Exception) {
-                        logger.warn("Error parsing aggregated names '{}'", data,e)
-                    }
+                try {
+                    val persistedMap = mapper.readValue(data.payload, AggregatedNames::class.java)
+                    currentNameMap.nameById.putAll(persistedMap.nameById)
+                } catch (e: Exception) {
+                    logger.warn("Error parsing aggregated names '{}'", data,e)
                 }
             }
         }
@@ -91,6 +79,6 @@ class NameService(
     }
 }
 
-data class NameUpdate(val id: String?, val name: String?)
+data class NameUpdate(val id: String, val name: String?)
 
 data class AggregatedNames(val nameById: ConcurrentHashMap<String, String?>)

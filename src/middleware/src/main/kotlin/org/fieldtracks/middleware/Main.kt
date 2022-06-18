@@ -27,7 +27,8 @@ class Middleware(
     private val mqttPassword: String?,
     simulate: Pair<Int,Int>?,
     flushNames: Boolean,
-    flushGraph: Boolean
+    flushGraph: Boolean,
+    flushBeaconStatus : Boolean
 ) {
 
     private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
@@ -37,7 +38,7 @@ class Middleware(
         nameService,
         StoneStatusService(client, scanIntervalSeconds),
         if(simulate == null) {
-            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph, nameService::resolve)
+            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph, flushBeaconStatus = flushBeaconStatus, nameService::resolve)
         } else {
             SimulatorService(client,scanIntervalSeconds,simulate.first,simulate.second, flushGraph = flushGraph)
         }
@@ -111,6 +112,7 @@ class middleware:CliktCommand() {
     private val mqttUser: String? by option("-u","--user-mqtt", help = "MQTT User")
     private val mqttPassword: String? by option("-p","--password-mqtt", help = "MQTT Password")
     private val flushNames: Boolean by option("-fn","--flush-names", help = "Flush aggregated names in topic").flag(default = false)
+    private val flushBeaconStatus: Boolean by option("-fs","--flush-beacon-status", help = "Flush aggregated beacon status topic").flag(default = false)
     private val flushGraph: Boolean by option("-fg","--flush-graph", help = "Flush aggregated graph in topic").flag(default = false)
     override fun run() {
         Middleware(scanIntervalSeconds = scanIntervalSeconds,
@@ -121,7 +123,9 @@ class middleware:CliktCommand() {
             mqttPassword = mqttPassword,
             simulate = simulate,
             flushNames = flushNames,
-            flushGraph = flushGraph).start()
+            flushGraph = flushGraph,
+            flushBeaconStatus = flushBeaconStatus
+        ).start()
     }
 }
 

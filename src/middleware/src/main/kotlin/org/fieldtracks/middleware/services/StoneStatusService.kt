@@ -7,7 +7,8 @@ import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class StoneStatusService(private val client: IMqttClient, scanIntervalSeconds: Int): ScheduledServiceBase(scanIntervalSeconds,scanIntervalSeconds) {
+class StoneStatusService(client: IMqttClient, scanIntervalSeconds: Int)
+    : ServiceBase(scanIntervalSeconds,scanIntervalSeconds, client, emptyList()) {
 
     private val mapper = createObjectMapper()
     private val logger = LoggerFactory.getLogger(StoneStatusService::class.java)
@@ -22,6 +23,7 @@ class StoneStatusService(private val client: IMqttClient, scanIntervalSeconds: I
                 incoming.removeAll(reportsByStone)
                 reportsByStone.forEach { statusByNodeId[it.first] = it.second }
                 val data = AggregatedStatusReport(statusByNodeId.toMap())
+                publishMQTTJson("Aggregated/status", data)
                 client.publish("Aggregated/status", mapper.writeValueAsBytes(data),1,true)
             } catch (e: Exception) {
                 logger.error("Failed aggregating status", e)
@@ -29,17 +31,10 @@ class StoneStatusService(private val client: IMqttClient, scanIntervalSeconds: I
         }
     }
 
-    override fun onMqttConnected(reconnect: Boolean) {
-        if(!reconnect) {
-            client.subscribe("JellingStone/status/#") {topic, data ->
-                try {
-                    val stone = topic.removePrefix("JellingStone/scan/")
-                    val report = mapper.readValue(data.payload, StoneStatusReport::class.java)
-                    incoming.add(stone to report)
-                } catch(e: Exception) {
-                    logger.error("Unable to parse status {}",data, e)
-                }
-            }
+    override fun onMqttConnectedInitially() {
+        subscribeJSONMqtt("JellingStone/status/#") {topic, report: StoneStatusReport ->
+            val stone = topic.removePrefix("JellingStone/status/")
+            incoming.add(stone to report)
         }
     }
 }

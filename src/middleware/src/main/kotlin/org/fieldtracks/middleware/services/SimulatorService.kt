@@ -12,22 +12,18 @@ import kotlin.collections.ArrayList
 import kotlin.random.Random
 import kotlin.random.asJavaRandom
 
-class SimulatorService(
-    private val client: IMqttClient,
+class SimulatorService(client: IMqttClient,
     scanIntervalSeconds: Int,
     private val stoneCnt: Int,
     beaconCnt: Int,
-    @Volatile private var flushGraph: Boolean
-): ScheduledServiceBase(initialDelaySeconds = scanIntervalSeconds, intervalSeconds = scanIntervalSeconds) {
+    flushGraph: Boolean
+): ServiceBase(initialDelaySeconds = scanIntervalSeconds, intervalSeconds = scanIntervalSeconds, client, vT(flushGraph to "Aggregated/scan" )) {
 
     private val macRandomness = Random(42).asJavaRandom()
     private val rssiRandomness = Random(23)
     private val beaconTypeRandomness = Random(4711)
     private val beaconIdRandomness = Random(0).asJavaRandom()
     private val linkRandomness = Random(1)
-
-    private val mapper = createObjectMapper()
-    private val logger = LoggerFactory.getLogger(SimulatorService::class.java)
 
     private val stoneNodes = (1..stoneCnt).map {
             randomMac()
@@ -60,19 +56,11 @@ class SimulatorService(
 
     }
 
-    override fun onMqttConnected(reconnect: Boolean) {
-        if(!reconnect && flushGraph) {
-            publish(ScanGraph(ArrayList(),ArrayList()))
-            flushGraph = false
-        }
+    override fun onMqttConnectedInitially() {
     }
 
     private fun publish(graph: ScanGraph) {
-        try {
-            client.publish("Aggregated/scan",mapper.writeValueAsBytes(graph),1,true)
-        } catch(e: Exception) {
-            logger.error("Error publishing simulated graph", e)
-        }
+        publishMQTTJson("Aggregated/scan", graph)
     }
 
     private fun randomMac():String {

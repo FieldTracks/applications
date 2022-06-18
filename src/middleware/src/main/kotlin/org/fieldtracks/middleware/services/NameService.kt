@@ -6,12 +6,9 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 
-class NameService(
-    private val client: IMqttClient,
-    @Volatile private var flushNames: Boolean
-):ScheduledServiceBase(initialDelaySeconds = 8, intervalSeconds = 1) {
+class NameService(client: IMqttClient,flushNames: Boolean)
+    :ServiceBase(initialDelaySeconds = 8, intervalSeconds = 1, client, vT(flushNames to "Names/aggregated")) {
 
-    private val mapper = createObjectMapper()
     private val reportQueue = LinkedBlockingQueue<NameUpdate>()
     private val logger = LoggerFactory.getLogger(NameService::class.java)
 
@@ -40,44 +37,25 @@ class NameService(
         }
     }
 
-    override fun onMqttConnected(reconnect: Boolean) {
-        if(!reconnect) {
-            if(flushNames) {
-                publishCurrentMap()
-                flushNames = false
-            }
-
-            client.subscribe("Names/updates") { _, data ->
-                    try {
-                        val updateMsg = mapper.readValue(data.payload,NameUpdate::class.java)
-                        reportQueue.add(updateMsg)
-                    } catch (e: Exception) {
-                        logger.warn("Error applying name-update '{}'", data,e)
-                    }
-            }
-            client.subscribe(aggregatedTopic) {_, data ->
-                try {
-                    val persistedMap = mapper.readValue(data.payload, AggregatedNames::class.java)
-                    currentNameMap.nameById.putAll(persistedMap.nameById)
-                } catch (e: Exception) {
-                    logger.warn("Error parsing aggregated names '{}'", data,e)
-                }
-            }
+    override fun onMqttConnectedInitially() {
+        subscribeJSONMqtt("Names/updates") { _: String, msg: NameUpdate ->
+            reportQueue.add(msg)
+        }
+        subscribeJSONMqtt(aggregatedTopic) { _, data: AggregatedNames ->
+            currentNameMap.nameById.putAll(data.nameById)
         }
     }
 
     private fun publishCurrentMap() {
-        try {
-            client.publish(aggregatedTopic,mapper.writeValueAsBytes(currentNameMap),1,true)
-        } catch (e: Exception) {
-            logger.error("Error publishing aggregated names", e)
-        }
+        publishMQTTJson(aggregatedTopic, currentNameMap)
     }
 
     fun resolve(id: String): String {
         return currentNameMap.nameById[id] ?: id
     }
 }
+
+
 
 data class NameUpdate(val id: String, val name: String?)
 

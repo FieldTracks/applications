@@ -1,5 +1,6 @@
 package org.fieldtracks.middleware.model
 
+import org.fieldtracks.middleware.services.NameResolver
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
@@ -10,7 +11,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         val logger = LoggerFactory.getLogger(ScanGraph::class.java)!!
     }
 
-    fun update(newReports: Set<ScanReportMessage>, maxBeaconAgeSeconds: Int, nameResolver: (String) -> String): ScanGraph {
+    fun update(newReports: Set<ScanReportMessage>, maxBeaconAgeSeconds: Int, nameResolver: NameResolver): ScanGraph {
         logger.trace("Updating graph - new data: '{}'",newReports)
         logger.trace("Old Graph '{}'",this)
 

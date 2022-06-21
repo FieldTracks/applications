@@ -10,90 +10,49 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.pair
 import com.github.ajalt.clikt.parameters.types.int
-import org.eclipse.paho.client.mqttv3.*
-import org.fieldtracks.middleware.services.NameService
-import org.fieldtracks.middleware.services.ScanService
-import org.fieldtracks.middleware.services.SimulatorService
-import org.fieldtracks.middleware.services.StoneStatusService
-import org.slf4j.LoggerFactory
-import java.util.*
+import org.fieldtracks.middleware.connectors.HttpConnector
+import org.fieldtracks.middleware.connectors.MqttConnector
+import org.fieldtracks.middleware.services.*
 
 class Middleware(
     scanIntervalSeconds: Int,
     reportMaxAge: Int,
     beaconMaxAge: Int,
-    private val mqttURL: String,
-    private val mqttUser: String?,
-    private val mqttPassword: String?,
+    mqttURL: String,
+    mqttUser: String?,
+    mqttPassword: String?,
     simulate: Pair<Int,Int>?,
     flushNames: Boolean,
     flushGraph: Boolean,
-    flushBeaconStatus : Boolean
+    flushBeaconStatus : Boolean,
+    keyStorePath: String,
+    keyStoreSecret: CharArray,
+    flushUser: Boolean
 ) {
+    private val doSimulate = simulate == null
 
-    private val client = MqttClient(mqttURL,"middleware-${UUID.randomUUID()}")
-    private val nameService = NameService(client, flushNames = flushNames)
+    private val mqttConnector = MqttConnector(mqttURL,mqttUser,mqttPassword)
 
-    private val services = listOf(
-        nameService,
-        StoneStatusService(client, scanIntervalSeconds),
-        if(simulate == null) {
-            ScanService(client, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph, flushBeaconStatus = flushBeaconStatus, nameService::resolve)
-        } else {
-            SimulatorService(client,scanIntervalSeconds,simulate.first,simulate.second, flushGraph = flushGraph)
-        }
-    )
-    private val logger = LoggerFactory.getLogger(Middleware::class.java)
+    private val nameService = NameService(mqttConnector.mqttClient, flushNames = flushNames)
+    private val authService = AuthService(mqttConnector.mqttClient,flushUser)
+    private val middlewareStatusService = MiddlewareStatusService(mqttConnector.mqttClient,authService)
+    private val stoneStatusService = StoneStatusService(mqttConnector.mqttClient, scanIntervalSeconds)
+    private val aggregatorService = if(simulate == null) {
+        ScanService(mqttConnector.mqttClient, scanIntervalSeconds,reportMaxAge,beaconMaxAge, flushGraph = flushGraph, flushBeaconStatus = flushBeaconStatus, nameService::resolve)
+    } else {
+        SimulatorService(mqttConnector.mqttClient,scanIntervalSeconds,simulate.first,simulate.second, flushGraph = flushGraph)
+    }
+    private val httpConnector = HttpConnector(authService,keyStorePath,keyStoreSecret)
+
+    private val mqttServices = listOf(nameService,stoneStatusService,aggregatorService,authService)
 
     fun start() {
-        logger.info("Starting - connecting to server")
-        val options = MqttConnectOptions()
-        options.serverURIs = arrayOf(mqttURL)
-        if(mqttUser != null) {
-            options.userName = mqttUser
-        }
-        if(mqttPassword != null) {
-            options.password = mqttPassword.toCharArray()
-        }
-
-        options.isAutomaticReconnect = true
-        options.isCleanSession = true
-        options.isHttpsHostnameVerificationEnabled = true
-
-        client.setCallback(object : MqttCallbackExtended {
-            override fun connectionLost(cause: Throwable?) {
-                logger.warn("Connection Lost", cause)
-                services.forEach { it.connectionLost()}
-            }
-            override fun messageArrived(topic: String?, message: MqttMessage?) { }
-
-            override fun deliveryComplete(token: IMqttDeliveryToken?) { }
-
-            override fun connectComplete(reconnect: Boolean, serverURI: String?) {
-                if(reconnect) {
-                    logger.info("Re-connected to server")
-                } else {
-                    logger.info("Connected to server")
-                }
-                services.forEach { it.connectCompleted(reconnect)}
-
-            }
-        })
-        while(true) {
-            try {
-                if(!client.isConnected) {
-                    client.connect(options)
-                }
-            } catch (e: Exception) {
-                logger.error("{} - retrying in 10 seconds", e.localizedMessage)
-            }
-            Thread.sleep(10_000)
-        }
+        httpConnector.connectNonBlocking(middlewareStatusService)
+        mqttConnector.connectBlocking(mqttServices)
     }
 }
 
 fun createObjectMapper(): ObjectMapper {
-
     return  ObjectMapper()
         .registerKotlinModule()
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS,false)
@@ -114,6 +73,11 @@ class middleware:CliktCommand() {
     private val flushNames: Boolean by option("-fn","--flush-names", help = "Flush aggregated names in topic").flag(default = false)
     private val flushBeaconStatus: Boolean by option("-fs","--flush-beacon-status", help = "Flush aggregated beacon status topic").flag(default = false)
     private val flushGraph: Boolean by option("-fg","--flush-graph", help = "Flush aggregated graph in topic").flag(default = false)
+    private val flushUser: Boolean by option("-fu","--flush-users", help = "Delete all users, i.e. reset admin password").flag(default = false)
+    private val keyStorePath: String by option("-kp", "--keystore-path", help="Path to keystore (default: keystore)").default("keystore")
+    private val keyStoreSecret: String by option("-ks", "--keystore-secret", help="Secret of the keystore (empty default").default("")
+
+
     override fun run() {
         Middleware(scanIntervalSeconds = scanIntervalSeconds,
             reportMaxAge = maxReportAge,
@@ -124,7 +88,12 @@ class middleware:CliktCommand() {
             simulate = simulate,
             flushNames = flushNames,
             flushGraph = flushGraph,
-            flushBeaconStatus = flushBeaconStatus
+            flushBeaconStatus = flushBeaconStatus,
+            keyStorePath = keyStorePath,
+            keyStoreSecret = keyStoreSecret.toCharArray(),
+            flushUser = flushUser
+
+
         ).start()
     }
 }

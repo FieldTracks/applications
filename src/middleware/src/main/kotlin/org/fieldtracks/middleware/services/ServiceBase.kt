@@ -5,29 +5,26 @@ import org.eclipse.paho.client.mqttv3.IMqttClient
 import org.fieldtracks.middleware.createObjectMapper
 import org.slf4j.LoggerFactory
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.BiFunction
-import kotlin.collections.ArrayList
 import kotlin.concurrent.timerTask
-import kotlin.reflect.KClass
 
 abstract class ServiceBase(
-    private val initialDelaySeconds: Int,
-    private val intervalSeconds: Int,
     val client: IMqttClient,
-    flushTopics: List<String> = emptyList()
-) {
+    private val schedule: Schedule? = null,
+    flushTopics: List<String> = emptyList())
+ {
 
+     private val logger = LoggerFactory.getLogger(ServiceBase::class.java)
+     private val timer: Timer = Timer()
 
     private var topicsToBeFlushed = ConcurrentLinkedQueue(flushTopics)
-
-    private val logger = LoggerFactory.getLogger(ServiceBase::class.java)
-    private val timer: Timer = Timer()
     val objectMapper: ThreadLocal<ObjectMapper> = ThreadLocal.withInitial { createObjectMapper() }
 
     fun connectionLost() {
-        modifyTimer(false)
+        if(schedule != null ){
+            modifyTimer(false)
+        }
     }
 
     fun connectCompleted(reconnect: Boolean) {
@@ -38,11 +35,16 @@ abstract class ServiceBase(
         if(!reconnect) {
             onMqttConnectedInitially()
         }
-        modifyTimer(true)
+        if(schedule != null ){
+            modifyTimer(true)
+        }
     }
 
     @Synchronized
     fun modifyTimer(enableTimer: Boolean) {
+        if(schedule == null) {
+            return
+        }
         if(enableTimer) {
             logger.debug("Enabling timer")
             timer.schedule(timerTask {
@@ -51,7 +53,7 @@ abstract class ServiceBase(
                 } catch (t: Throwable){
                     logger.error("Error aggregating data", t)
                 }
-            },initialDelaySeconds * 1000L ,intervalSeconds * 1000L)
+            },schedule.initialDelaySeconds * 1000L ,schedule.intervalSeconds * 1000L)
         } else {
             logger.debug("Disabling timer")
             timer.cancel()
@@ -88,14 +90,22 @@ abstract class ServiceBase(
         }
     }
 
-    abstract fun onTimerTriggered()
-    abstract fun onMqttConnectedInitially()
+    open fun onTimerTriggered() {
+
+    }
+
+     abstract fun onMqttConnectedInitially()
 }
+data class Schedule(
+    val initialDelaySeconds: Int,
+    val intervalSeconds: Int,
+)
+
 
 // Stupid helper for nice constructor syntax - is there a better way in kotlin?
 // That looks like stdlib-code .. but, is it included in the language already
-fun <T> vT(vararg topicList: Pair<Boolean, T>): List<T> {
-    return topicList.mapNotNull {
+fun <T> vT(vararg entryByFlag: Pair<Boolean, T>): List<T> {
+    return entryByFlag.mapNotNull {
         if(it.first) {
             it.second
         } else {

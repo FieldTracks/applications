@@ -11,6 +11,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+
 }
 
 dependencies {
@@ -23,8 +24,15 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-core:2.17.2")
     implementation("org.apache.logging.log4j:log4j-slf4j-impl:2.17.2")
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
-}
+    implementation("io.vertx:vertx-web:4.3.1")
+    implementation("io.vertx:vertx-auth-jwt:4.3.1")
+//    implementation("org.jboss.resteasy:resteasy-vertx:6.0.1.Final")
+//    implementation("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.13.3")
+//    implementation("org.jboss.resteasy:resteasy-jackson2-provider:6.0.1.Final")
+//    implementation("org.jboss.resteasy:resteasy-jaxb-provider:6.0.1.Final")
+//    implementation("org.jboss.spec.javax.xml.bind:jboss-jaxb-api_2.3_spec:2.0.1.Final")
 
+}
 tasks.test {
     useJUnitPlatform()
 }

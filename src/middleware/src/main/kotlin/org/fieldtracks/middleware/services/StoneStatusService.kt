@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class StoneStatusService(client: IMqttClient, scanIntervalSeconds: Int)
-    : ServiceBase(scanIntervalSeconds,scanIntervalSeconds, client, emptyList()) {
+    : ServiceBase(client, Schedule(scanIntervalSeconds,scanIntervalSeconds), emptyList()) {
 
     private val mapper = createObjectMapper()
     private val logger = LoggerFactory.getLogger(StoneStatusService::class.java)

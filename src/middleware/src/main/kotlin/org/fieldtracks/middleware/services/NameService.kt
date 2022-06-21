@@ -1,13 +1,12 @@
 package org.fieldtracks.middleware.services
 
 import org.eclipse.paho.client.mqttv3.IMqttClient
-import org.fieldtracks.middleware.createObjectMapper
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.LinkedBlockingQueue
 
 class NameService(client: IMqttClient,flushNames: Boolean)
-    :ServiceBase(initialDelaySeconds = 8, intervalSeconds = 1, client, vT(flushNames to "Names/aggregated")) {
+    :ServiceBase(client,Schedule(8,1), vT(flushNames to "Names/aggregated")) {
 
     private val reportQueue = LinkedBlockingQueue<NameUpdate>()
     private val logger = LoggerFactory.getLogger(NameService::class.java)

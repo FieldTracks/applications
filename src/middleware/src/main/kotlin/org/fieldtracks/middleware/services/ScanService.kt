@@ -16,7 +16,7 @@ class ScanService(
     private val maxBeaconAgeSeconds: Int,
     flushGraph: Boolean, flushBeaconStatus: Boolean,
     private val nameResolver: NameResolver
-): ServiceBase(scanIntervalSeconds,scanIntervalSeconds,client, vT(flushGraph to "Aggregated/scan", flushBeaconStatus to "Aggregated/beaconStatus" )) {
+): ServiceBase(client, Schedule(scanIntervalSeconds,scanIntervalSeconds), vT(flushGraph to "Aggregated/scan", flushBeaconStatus to "Aggregated/beaconStatus" )) {
 
     private val logger = LoggerFactory.getLogger(ScanService::class.java)
 

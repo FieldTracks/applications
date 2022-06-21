@@ -1,11 +1,9 @@
 package org.fieldtracks.middleware.services
 
 import org.eclipse.paho.client.mqttv3.IMqttClient
-import org.fieldtracks.middleware.createObjectMapper
 import org.fieldtracks.middleware.model.GraphLink
 import org.fieldtracks.middleware.model.GraphNode
 import org.fieldtracks.middleware.model.ScanGraph
-import org.slf4j.LoggerFactory
 import java.math.BigInteger
 import java.time.Instant
 import kotlin.collections.ArrayList
@@ -17,7 +15,7 @@ class SimulatorService(client: IMqttClient,
     private val stoneCnt: Int,
     beaconCnt: Int,
     flushGraph: Boolean
-): ServiceBase(initialDelaySeconds = scanIntervalSeconds, intervalSeconds = scanIntervalSeconds, client, vT(flushGraph to "Aggregated/scan" )) {
+): ServiceBase(client,Schedule(scanIntervalSeconds,scanIntervalSeconds), vT(flushGraph to "Aggregated/scan" )) {
 
     private val macRandomness = Random(42).asJavaRandom()
     private val rssiRandomness = Random(23)

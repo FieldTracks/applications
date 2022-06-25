@@ -35,8 +35,6 @@ export class LoginService {
       })
     )
 
-
-   //
   }
 
   login(user: string, password: string ):Observable<void> {

@@ -73,7 +73,9 @@
               "browserTarget": "fieldmon:build:production"
             },
             "development": {
-              "browserTarget": "fieldmon:build:development"
+              "browserTarget": "fieldmon:build:development",
+              "proxyConfig": "src/environments/proxy.dev.json"
+
             }
           },
           "defaultConfiguration": "development"

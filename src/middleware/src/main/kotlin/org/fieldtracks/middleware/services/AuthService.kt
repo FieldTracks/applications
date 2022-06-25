@@ -27,10 +27,13 @@ class AuthService(client: IMqttClient, flushUser: Boolean) : ServiceBase(client,
         return !users.passwordByUser["admin"].isNullOrBlank()
     }
 
-    fun authenticate(user: String, password: String): Boolean {
+    fun authenticate(user: String?, password: String?): Boolean {
         try {
             val admin = users.passwordByUser["admin"]
-            return if (user != "admin") {
+            return if(user == null || password == null)  {
+                logger.info("No username or password provided")
+                false
+            } else if (user != "admin") {
                 logger.info("Rejecting username {}", user)
                 false
             } else if(admin != null) {

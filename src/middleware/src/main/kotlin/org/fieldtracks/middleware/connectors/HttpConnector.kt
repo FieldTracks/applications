@@ -3,10 +3,12 @@ package org.fieldtracks.middleware.connectors
 import io.vertx.core.Future
 import io.vertx.core.Vertx
 import io.vertx.core.json.JsonObject
+import io.vertx.ext.auth.JWTOptions
 import io.vertx.ext.auth.KeyStoreOptions
 import io.vertx.ext.auth.jwt.JWTAuth
 import io.vertx.ext.auth.jwt.JWTAuthOptions
 import io.vertx.ext.web.Router
+import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.JWTAuthHandler
 import org.fieldtracks.middleware.services.AuthService
 import org.fieldtracks.middleware.services.MiddlewareStatusService
@@ -15,6 +17,7 @@ import java.io.File
 import java.security.KeyStore
 import java.security.KeyStore.PasswordProtection
 import java.security.KeyStore.ProtectionParameter
+import java.util.Base64
 import javax.crypto.KeyGenerator
 
 
@@ -38,11 +41,16 @@ class HttpConnector(private val authService: AuthService,
 
 
         router.route("/api/login")
+            .handler(BodyHandler.create())
             .handler { ctx ->
-                val user = ctx.request().getParam("user")
-                val passwd = ctx.request().getParam("passwd")
-                if (authService.authenticate(user, passwd)) {
-                    ctx.response().end(jwtAuthProvider.generateToken(JsonObject().put("sub", user)))
+                val data = ctx.body().asJsonObject()
+                val user = data.getString("user")
+                val passwd = data.getString("password")
+
+                if (authService.authenticate(user,passwd)) {
+                    ctx.response().end(
+                        JsonObject().put("token", jwtAuthProvider.generateToken(JsonObject().put("sub", user))).toBuffer()
+                    )
                 } else {
                     ctx.fail(401)
                 }
@@ -73,7 +81,7 @@ class HttpConnector(private val authService: AuthService,
             keyStore.load(null,keyStoreSecret) // Creates an empty keystore
 
             val keygen =  KeyGenerator.getInstance("HmacSHA256")
-            keygen.init(2048)
+            keygen.init(256)
             val key = keygen.generateKey()
             keyStore.setEntry("HS256",KeyStore.SecretKeyEntry(key),protParam)
             storeFile.outputStream().use { fos ->
@@ -87,6 +95,9 @@ class HttpConnector(private val authService: AuthService,
                     .setType("jceks")
                     .setPath(keyStorePath)
                     .setPassword(String(keyStoreSecret))
+            ).setJWTOptions(
+                JWTOptions()
+                    .setExpiresInSeconds(48 * 3600) // Two days
             )
         this.jwtAuthProvider = JWTAuth.create(vertx, config)
     }

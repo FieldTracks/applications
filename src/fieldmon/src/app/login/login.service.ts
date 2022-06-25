@@ -1,9 +1,9 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable, tap} from "rxjs";
+import {BehaviorSubject, catchError, map, mergeMap, Observable, of, tap, timer} from "rxjs";
 import * as moment from 'moment';
 
 import {
-  HttpClient,
+  HttpClient, HttpErrorResponse,
   HttpEvent,
   HttpHandler,
   HttpHeaders,
@@ -25,20 +25,31 @@ export class LoginService {
     return this.tokenSubject;
   }
 
-  login(email: string, password: string ) {
-    const encoder = new HttpUrlEncodingCodec();
-    const options = {
-      headers: new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded')
-    };
-    return this.http.post('/api/login', 'user=' + encoder.encodeValue(email) + '&password=' + encoder.encodeValue(password) , options).pipe(
-      tap((res) => {
-        this.setSession(res); }
-      )
-    );
+  serverStatus(): Observable<ServerStatus> {
+
+    return timer(0,5000).pipe(
+      mergeMap(_ => {
+        return this.http.get<ServerStatus>("/api/status").pipe(
+          catchError(val => of({status: <ServerStatusType>`UNREACHABLE`, error: val}))
+        )
+      })
+    )
+
+
+   //
   }
 
-  private setSession(token: any) {
+  login(user: string, password: string ):Observable<void> {
+    return this.http.post<{ token: string }>('/api/login', {user: user, password: password}).pipe(
+      map ( httpResult => {
+        this.setSession(httpResult)
+      })
+    )
+  }
+
+  private setSession(token: { token: string }) {
     const authResult: any = jwt_decode(token['token'])
+    console.log("Token: ", authResult)
     const expires_epoch = authResult.exp;
     localStorage.setItem('id_token', token['token']);
     localStorage.setItem('expires_at', expires_epoch );
@@ -60,13 +71,12 @@ export class LoginService {
   }
 
   getExpiration(): Number {
-    const expiration = localStorage.getItem('expires_at');
-    if(expiration != null) {
-      return JSON.parse(expiration);
-    } else {
-      return 1; // expired at 1970-01-01
+    try {
+      const expiration = localStorage.getItem('expires_at');
+      return JSON.parse(expiration!!);
+    } catch (e) {
+      return 1
     }
-
   }
 }
 
@@ -88,3 +98,9 @@ export class AuthInterceptor implements HttpInterceptor {
   }
 }
 
+export interface ServerStatus {
+  status: ServerStatusType
+  error?: HttpErrorResponse
+}
+
+type ServerStatusType = "DISCONNECTED" | "RUNNING" | "INSTALLER" | "UNREACHABLE"

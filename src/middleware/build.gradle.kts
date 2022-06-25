@@ -28,7 +28,7 @@ dependencies {
     implementation("io.vertx:vertx-auth-jwt:4.3.1")
 //    implementation("org.jboss.resteasy:resteasy-vertx:6.0.1.Final")
 //    implementation("com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.13.3")
-//    implementation("org.jboss.resteasy:resteasy-jackson2-provider:6.0.1.Final")
+ //   implementation("org.jboss.resteasy:resteasy-jackson2-provider:6.1.0.Beta2")
 //    implementation("org.jboss.resteasy:resteasy-jaxb-provider:6.0.1.Final")
 //    implementation("org.jboss.spec.javax.xml.bind:jboss-jaxb-api_2.3_spec:2.0.1.Final")
 

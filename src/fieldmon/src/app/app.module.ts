@@ -14,23 +14,22 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from "@angular/material/input";
 import {MatButtonModule} from "@angular/material/button";
-import {RouterModule, Routes} from "@angular/router";
 import {MatToolbarModule} from "@angular/material/toolbar";
 import {MatCardModule} from "@angular/material/card";
-
-const routes: Routes = [
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-];
-  // { path: 'stone-overview', component: StoneOverviewComponent },
-  // { path: 'sensor-contacts', component: SensorContactsComponent },
-  // { path: 'graph', component: GraphComponent },
-  // { path: 'names', component: NamesComponent
-
-    @NgModule({
+import { HeaderNavbarComponent } from './header-navbar/header-navbar.component';
+import { GraphComponent } from './graph/graph.component';
+import { D3ForceComponent } from './graph/d3-force/d3-force.component';
+import { SettingsComponent } from './graph/settings/settings.component';
+import {MatMenuModule} from "@angular/material/menu";
+import {MatIconModule} from "@angular/material/icon";
+@NgModule({
   declarations: [
     AppComponent,
-    LoginComponent
+    LoginComponent,
+    HeaderNavbarComponent,
+    GraphComponent,
+    D3ForceComponent,
+    SettingsComponent
   ],
   imports: [
     BrowserModule,
@@ -46,8 +45,8 @@ const routes: Routes = [
     ReactiveFormsModule,
     MatToolbarModule,
     MatCardModule,
-    RouterModule.forRoot(routes, { relativeLinkResolution: 'legacy' })
-
+    MatMenuModule,
+    MatIconModule
   ],
   providers: [],
   bootstrap: [AppComponent]

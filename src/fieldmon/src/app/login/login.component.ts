@@ -74,7 +74,7 @@ export class LoginComponent implements OnInit {
     const username = ctrls.username.value || ""
     const password = ctrls.password.value || ""
     this.loginService.login(username, password).subscribe({
-      next: () => console.log("Jo"),//this.router.navigate(['/stone-overview']),
+      next: () => this.router.navigate(['/graph']),
       error: (e) => {
         console.log("Login-Error:", e)
         this.connectionProblem = true

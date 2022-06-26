@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
 
-data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<GraphLink>) {
+data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<GraphLink>, val timeStmp: Instant) {
 
     companion object {
         val logger = LoggerFactory.getLogger(ScanGraph::class.java)!!
@@ -16,7 +16,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
         logger.trace("Old Graph '{}'",this)
 
 
-        val newGraph = ScanGraph(ArrayList(), ArrayList())
+        val newGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
         val rssiMap = HashMap<String, ArrayList<Pair<Int, ScanReportMessage>>>() // Beacon-ID maps to List Paris: RSSI to Report that has it
 
         val beaconIDs = HashSet<String>()

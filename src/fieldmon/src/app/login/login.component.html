@@ -1,4 +1,4 @@
-<mat-toolbar color="primary" >Field Monitor</mat-toolbar>
+<app-header-navbar></app-header-navbar>
 
 
 <section id="login-section" *ngIf="serverStatus | async as status">
@@ -7,41 +7,49 @@
 
   <mat-spinner *ngIf="showSpinner" style="margin:0 auto;" mode="indeterminate"></mat-spinner>
 
-      <mat-error *ngIf="status.status === 'UNREACHABLE'">
-              Middleware is unreachable <br />{{ status.error?.statusText }} (HTTP-{{status.error?.status}})
-      </mat-error>
-    <mat-error *ngIf="status.status === 'DISCONNECTED'">
-      Not connected to MQTT <br /> Check middleware-log for details
-    </mat-error>
-    <div *ngIf="status.status === 'RUNNING'">
-        <form [formGroup]="loginForm" (ngSubmit)="onLoginformSubmit()" #f="ngForm" *ngIf="!showSpinner" >
-          <p *ngIf="connectionProblem">
-            <mat-error >Invalid credentials</mat-error>
-          </p>
-          <mat-form-field>
-            <input matInput placeholder="Username" formControlName="username" >
-          </mat-form-field>
-          <mat-form-field>
-            <input matInput placeholder="Password" formControlName="password" type="password" name="password">
-          </mat-form-field>
-          <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary" >Login</button>
-        </form>
-    </div>
-    <div *ngIf="status.status === 'INSTALLER'">
-        <form [formGroup]="installerForm" (ngSubmit)="onRegisterformSubmit()" #f="ngForm" *ngIf="!showSpinner" >
-          <h3>Create a user to continue</h3>
-          <mat-form-field>
-            <input matInput placeholder="Username" readonly formControlName="username" name="username" >
-          </mat-form-field>
-          <mat-form-field>
-            <input matInput placeholder="Password" formControlName="password" type="password" name="password">
-          </mat-form-field>
-          <mat-form-field>
-            <input [errorStateMatcher]="isNotConfirmed" matInput placeholder="Confirm Password" formControlName="passwordConfirmation" type="password" name="passwordConfirm" >
-            <mat-error *ngIf="installerForm.errors?.['noMatch']">Passwords do not match</mat-error>
-          </mat-form-field>
-          <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary" >Login</button>
-        </form>
-    </div>
+  <!-- Error states -->
+  <mat-error *ngIf="status.status === 'UNREACHABLE'">
+    Middleware is unreachable <br/>{{ status.error?.statusText }} (HTTP-{{status.error?.status}})
+  </mat-error>
+  <mat-error *ngIf="status.status === 'DISCONNECTED'">
+    Not connected to MQTT <br/> Check middleware-log for details
+  </mat-error>
+
+
+  <!-- Login-Form - middleware is running -->
+  <div *ngIf="status.status === 'RUNNING'">
+    <form [formGroup]="loginForm" (ngSubmit)="onLoginformSubmit()" #f="ngForm" *ngIf="!showSpinner">
+      <p *ngIf="connectionProblem">
+        <mat-error>Invalid credentials</mat-error>
+      </p>
+      <mat-form-field>
+        <input matInput placeholder="Username" formControlName="username">
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Password" formControlName="password" type="password" name="password">
+      </mat-form-field>
+      <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary">Login</button>
+    </form>
+  </div>
+
+
+  <!-- Installer-Form - middleware is not set up, yet. -->
+  <div *ngIf="status.status === 'INSTALLER'">
+    <form [formGroup]="installerForm" (ngSubmit)="onRegisterformSubmit()" #f="ngForm" *ngIf="!showSpinner">
+      <h3>Create a user to continue</h3>
+      <mat-form-field>
+        <input matInput placeholder="Username" readonly formControlName="username" name="username">
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Password" formControlName="password" type="password" name="password">
+      </mat-form-field>
+      <mat-form-field>
+        <input [errorStateMatcher]="isNotConfirmed" matInput placeholder="Confirm Password"
+               formControlName="passwordConfirmation" type="password" name="passwordConfirm">
+        <mat-error *ngIf="installerForm.errors?.['noMatch']">Passwords do not match</mat-error>
+      </mat-form-field>
+      <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary">Login</button>
+    </form>
+  </div>
 
 </section>

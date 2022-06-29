@@ -7,6 +7,7 @@ import java.time.Instant
 
 data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<GraphLink>, val timeStmp: Instant) {
 
+
     companion object {
         val logger = LoggerFactory.getLogger(ScanGraph::class.java)!!
     }
@@ -28,7 +29,7 @@ data class ScanGraph(val nodes: ArrayList<GraphNode>, val links: ArrayList<Graph
             logger.debug("Processing report from '{}': ID: '{}', MID: '{}'",report.stoneId,report.reportIdTimeStamp,report.messageSeqNum)
             oldNodes.remove(report.stoneId)
             newGraph.nodes.add(GraphNode(report.stoneId, nameResolver(report.stoneId), report.reportIdTimeStamp, offline = false, stone = true))
-            report.beaconData.forEach { beacon ->
+            report.beaconData.filter { it.type != 8 }.forEach { beacon -> // Ignore eddystone EID, i.e. type == 8
                 val idStr = beacon.id.toString(16)
                 oldNodes.remove(idStr)
                 val data = rssiMap.computeIfAbsent(idStr) { ArrayList() }

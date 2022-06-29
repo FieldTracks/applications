@@ -13,6 +13,10 @@ export class DrawUtils {
       ctx.fillStyle = "#F0F"
     }
     ctx.fill()
+    ctx.beginPath()
+    ctx.textAlign = "center"
+    ctx.fillStyle = "black"
+    ctx.fillText(node.name, node.x, node.y + 20)
   }
 
 

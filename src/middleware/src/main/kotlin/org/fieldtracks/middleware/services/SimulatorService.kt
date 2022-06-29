@@ -49,7 +49,7 @@ class SimulatorService(client: IMqttClient,
                 offline = false
             )
         }
-        val graph = ScanGraph(ArrayList(graphNodes), ArrayList(graphLinks))
+        val graph = ScanGraph(ArrayList(graphNodes), ArrayList(graphLinks), Instant.now())
         publish(graph)
 
     }

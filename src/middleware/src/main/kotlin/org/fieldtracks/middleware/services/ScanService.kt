@@ -5,6 +5,7 @@ import org.fieldtracks.middleware.model.BeaconStatusReport
 import org.fieldtracks.middleware.model.ScanGraph
 import org.fieldtracks.middleware.model.ScanReportMessage
 import org.slf4j.LoggerFactory
+import java.time.Instant
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -23,7 +24,7 @@ class ScanService(
     private val reportQueue = ConcurrentLinkedQueue<ScanReportMessage>()
 
     @Volatile
-    private var currentGraph = ScanGraph(ArrayList(), ArrayList())
+    private var currentGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
 
     @Volatile
     private var currentBeaconStatus = BeaconStatusReport(HashMap())

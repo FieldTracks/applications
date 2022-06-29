@@ -36,7 +36,7 @@ export class Forcesimulation {
 
     this.simulation = forceSimulation<D3Node, D3Link>(this.forceGraphModel.nodes)
       .force('charge', forceManyBody().strength(-10).distanceMax(100))
-      .force('collide', forceCollide())
+      .force('collide', forceCollide(30))
       .on('tick', function () {
         that.redraw()
       })

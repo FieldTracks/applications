@@ -16,7 +16,9 @@ abstract class ServiceBase(
  {
 
      private val logger = LoggerFactory.getLogger(ServiceBase::class.java)
-     private val timer: Timer = Timer()
+
+     @Volatile
+     private var timer = Timer()
 
     private var topicsToBeFlushed = ConcurrentLinkedQueue(flushTopics)
     val objectMapper: ThreadLocal<ObjectMapper> = ThreadLocal.withInitial { createObjectMapper() }
@@ -57,6 +59,7 @@ abstract class ServiceBase(
         } else {
             logger.debug("Disabling timer")
             timer.cancel()
+            timer = Timer()
         }
     }
 

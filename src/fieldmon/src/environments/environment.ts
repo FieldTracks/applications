@@ -2,8 +2,20 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import {IClientOptions} from "mqtt/types/lib/client-options";
+
+const mqtt_parameters: IClientOptions = {
+  host: "82.165.32.84",
+  hostname: "dev.fieldtracks.org",
+  port: 8882,
+  protocol: "wss",
+  username: "esp32-dev-1",
+  password: ""
+}
+
 export const environment = {
-  production: false
+  production: false,
+  mqtt_options: mqtt_parameters
 };
 
 /*

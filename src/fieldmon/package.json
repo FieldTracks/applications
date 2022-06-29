@@ -20,6 +20,7 @@
     "@angular/platform-browser": "^14.0.0",
     "@angular/platform-browser-dynamic": "^14.0.0",
     "@angular/router": "^14.0.0",
+    "buffer": "^6.0.3",
     "d3-drag": "^3.0.0",
     "d3-force": "^3.0.0",
     "d3-scale": "^4.0.2",
@@ -27,8 +28,11 @@
     "d3-zoom": "^3.0.0",
     "jwt-decode": "^3.1.2",
     "moment": "^2.29.3",
+    "mqtt": "^4.3.7",
+    "process": "^0.11.10",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
+    "url": "^0.11.0",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {

@@ -12,6 +12,8 @@ import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.JWTAuthHandler
 import org.fieldtracks.middleware.services.AuthService
 import org.fieldtracks.middleware.services.MiddlewareStatusService
+import org.jboss.resteasy.plugins.server.vertx.VertxRequestHandler
+import org.jboss.resteasy.plugins.server.vertx.VertxResteasyDeployment
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.security.KeyStore
@@ -34,10 +36,12 @@ class HttpConnector(private val authService: AuthService,
 
 
     fun connectNonBlocking(middlewareStatusService: MiddlewareStatusService){
-//        val deployment = VertxResteasyDeployment()
-//        deployment.start()
-//        serviceSingletons.forEach { deployment.registry.addSingletonResource(it) }
-//        val vertxHandler = VertxRequestHandler(vertx, deployment,"/api/resources/")
+        val deployment = VertxResteasyDeployment()
+        deployment.start()
+
+        deployment.registry.addSingletonResource(middlewareStatusService)
+        //serviceSingletons.forEach { deployment.registry.addSingletonResource(it) }
+        val vertxHandler = VertxRequestHandler(vertx, deployment,"/api/resources/")
 
 
         router.route("/api/login")
@@ -55,12 +59,12 @@ class HttpConnector(private val authService: AuthService,
                     ctx.fail(401)
                 }
             }
-        router.route("/api/status")
-            .respond { ctx -> Future.succeededFuture(JsonObject().put("status",middlewareStatusService.currentStatus()))}
+//        router.route("/api/status")
+//            .respond { ctx -> Future.succeededFuture(JsonObject().put("status",middlewareStatusService.currentStatus()))}
         router.route("/api/resources/private/*").handler(JWTAuthHandler.create(jwtAuthProvider))
-//        router.route("/api/resources/*").handler {
-//            ctx -> vertxHandler.handle(ctx.request())
-//        }
+        router.route("/api/resources/*").handler {
+            ctx -> vertxHandler.handle(ctx.request())
+        }
 
         server
             .requestHandler(router)

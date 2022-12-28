@@ -10,18 +10,18 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { LoginComponent } from './login/login.component';
 
-import {MatLegacyProgressSpinnerModule as MatProgressSpinnerModule} from '@angular/material/legacy-progress-spinner';
-import {MatLegacyFormFieldModule as MatFormFieldModule} from '@angular/material/legacy-form-field';
-import {MatLegacyInputModule as MatInputModule} from "@angular/material/legacy-input";
-import {MatLegacyButtonModule as MatButtonModule} from "@angular/material/legacy-button";
 import {MatToolbarModule} from "@angular/material/toolbar";
-import {MatLegacyCardModule as MatCardModule} from "@angular/material/legacy-card";
 import { HeaderNavbarComponent } from './header-navbar/header-navbar.component';
 import { GraphComponent } from './graph/graph.component';
 import { D3ForceComponent } from './graph/d3-force/d3-force.component';
 import { SettingsComponent } from './graph/settings/settings.component';
-import {MatLegacyMenuModule as MatMenuModule} from "@angular/material/legacy-menu";
 import {MatIconModule} from "@angular/material/icon";
+import {MatProgressSpinnerModule} from "@angular/material/progress-spinner";
+import {MatFormFieldModule} from "@angular/material/form-field";
+import {MatInputModule} from "@angular/material/input";
+import {MatButtonModule} from "@angular/material/button";
+import {MatCardModule} from "@angular/material/card";
+import {MatMenuModule} from "@angular/material/menu";
 @NgModule({
   declarations: [
     AppComponent,

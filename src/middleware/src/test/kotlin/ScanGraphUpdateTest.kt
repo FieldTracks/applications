@@ -10,15 +10,16 @@ class ScanGraphUpdateTest {
 
     @Test
     fun emptyGraphNoUpdate() {
-        val emptyGraph = ScanGraph(ArrayList(), ArrayList())
+        val emptyGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
         val result = emptyGraph.update(emptySet(), Int.MAX_VALUE) { it }
-        assertEquals(emptyGraph,result)
+        assertEquals(emptyGraph.links,result.links)
+        assertEquals(emptyGraph.nodes,result.nodes)
     }
 
     @Test
     fun newBeaconAppearing() {
         val stmp = Instant.now()
-        val emptyGraph = ScanGraph(ArrayList(), ArrayList())
+        val emptyGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
         val newBeacon = ScanReportBeaconData(type = 1, rssi = -42, id = BigInteger("FF",16))
         val report1 = ScanReportMessage("stone-23", stmp,-1, listOf(newBeacon))
         val result = emptyGraph.update(setOf(report1), Int.MAX_VALUE) { it }
@@ -39,7 +40,7 @@ class ScanGraphUpdateTest {
     @Test
     fun beaconGoingDark() {
         val stmp = Instant.now()
-        val emptyGraph = ScanGraph(ArrayList(), ArrayList())
+        val emptyGraph = ScanGraph(ArrayList(), ArrayList(),Instant.now())
         val newBeacon = ScanReportBeaconData(type = 1, rssi = -42, id = BigInteger("FF",16))
         val report1 = ScanReportMessage("stone-23", stmp,-1, listOf(newBeacon))
         val report2 = ScanReportMessage("stone-23", stmp,-1, emptyList())
@@ -63,7 +64,7 @@ class ScanGraphUpdateTest {
     @Test
     fun stoneGoingDark() {
         val stmp = Instant.now()
-        val emptyGraph = ScanGraph(ArrayList(), ArrayList())
+        val emptyGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
         val newBeacon = ScanReportBeaconData(type = 1, rssi = -42, id = BigInteger("FF",16))
         val report1 = ScanReportMessage("stone-23", stmp,-1, listOf(newBeacon))
         val result = emptyGraph
@@ -86,7 +87,7 @@ class ScanGraphUpdateTest {
     @Test
     fun beaconMovingStrongerSignal() {
         val stmp = Instant.now()
-        val emptyGraph = ScanGraph(ArrayList(), ArrayList())
+        val emptyGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
         val beacon = ScanReportBeaconData(type = 1, rssi = -42, id = BigInteger("FF",16))
         val beaconStrongSignal = ScanReportBeaconData(type = 1, rssi = -23, id = BigInteger("FF",16))
 

@@ -29,7 +29,7 @@ export class LoginService {
 
     return timer(0,5000).pipe(
       mergeMap(_ => {
-        return this.http.get<ServerStatus>("/api/status").pipe(
+        return this.http.get<ServerStatus>("/api/resources/status").pipe(
           catchError(val => of({status: <ServerStatusType>`UNREACHABLE`, error: val}))
         )
       })

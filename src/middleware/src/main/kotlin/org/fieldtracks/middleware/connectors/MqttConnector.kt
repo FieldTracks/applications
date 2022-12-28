@@ -4,6 +4,7 @@ import org.eclipse.paho.client.mqttv3.*
 import org.fieldtracks.middleware.services.ServiceBase
 import org.slf4j.LoggerFactory
 import java.util.*
+import kotlin.concurrent.thread
 
 
 class MqttConnector(
@@ -35,7 +36,13 @@ class MqttConnector(
         mqttClient.setCallback(object : MqttCallbackExtended {
             override fun connectionLost(cause: Throwable?) {
                 logger.warn("Connection Lost", cause)
-                mqttServices.forEach { it.connectionLost()}
+                mqttServices.forEach {
+                    try {
+                        it.connectionLost()
+                    } catch (e: Exception) {
+                        logger.error("Error",e)
+                    }
+                }
             }
             override fun messageArrived(topic: String?, message: MqttMessage?) { }
 
@@ -47,9 +54,15 @@ class MqttConnector(
                 } else {
                     logger.info("Connected to server")
                 }
-                mqttServices.forEach { it.connectCompleted(reconnect)}
+                // N.B. the mqtt client's thread models does not support sending messages from handlers in the same thread
+                thread(start = true) {
+                    mqttServices.forEach {
+                        it.connectCompleted(reconnect)
+                    }
+                }
             }
         })
+
         while(true) {
             try {
                 if(!mqttClient.isConnected) {

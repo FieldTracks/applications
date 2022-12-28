@@ -16,6 +16,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("org.testcontainers:testcontainers:1.17.6")
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.14.1")
@@ -26,8 +27,10 @@ dependencies {
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
     implementation("io.vertx:vertx-web:4.3.7")
     implementation("io.vertx:vertx-auth-jwt:4.3.7")
+    implementation("io.vertx:vertx-http-proxy:4.3.7")
     implementation("org.jboss.resteasy:resteasy-vertx:6.2.2.Final")
     implementation("org.jboss.resteasy:resteasy-jackson2-provider:6.2.2.Final")
+
 
 }
 tasks.test {

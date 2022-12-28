@@ -3,5 +3,11 @@
     "target": "http://localhost:8080",
     "logLevel": "debug",
     "changeOrigin": true
+  },
+
+  "/mqtt/*": {
+    "target": "http://127.0.0.1:8ß80/mqtt/connect",
+    "secure": false,
+    "ws": true
   }
 }

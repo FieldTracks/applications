@@ -1,7 +1,10 @@
 package org.fieldtracks.middleware.connectors
 
+import io.netty.handler.proxy.HttpProxyHandler.HttpProxyConnectException
 import io.vertx.core.Future
 import io.vertx.core.Vertx
+import io.vertx.core.http.HttpClientOptions
+import io.vertx.core.http.impl.HttpServerRequestWrapper
 import io.vertx.core.json.JsonObject
 import io.vertx.ext.auth.JWTOptions
 import io.vertx.ext.auth.KeyStoreOptions
@@ -10,6 +13,7 @@ import io.vertx.ext.auth.jwt.JWTAuthOptions
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.handler.BodyHandler
 import io.vertx.ext.web.handler.JWTAuthHandler
+import io.vertx.httpproxy.*
 import org.fieldtracks.middleware.services.AuthService
 import org.fieldtracks.middleware.services.MiddlewareStatusService
 import org.jboss.resteasy.plugins.server.vertx.VertxRequestHandler
@@ -25,7 +29,8 @@ import javax.crypto.KeyGenerator
 
 class HttpConnector(private val authService: AuthService,
                     private val keyStorePath: String,
-                    private val keyStoreSecret: CharArray) {
+                    private val keyStoreSecret: CharArray,
+                    ) {
 
     private val logger = LoggerFactory.getLogger(HttpConnector::class.java)
 
@@ -43,6 +48,10 @@ class HttpConnector(private val authService: AuthService,
         //serviceSingletons.forEach { deployment.registry.addSingletonResource(it) }
         val vertxHandler = VertxRequestHandler(vertx, deployment,"/api/resources/")
 
+        val proxyOptions = ProxyOptions().setSupportWebSocket(true)
+
+        val proxy = HttpProxy.reverseProxy(proxyOptions, vertx.createHttpClient())
+        proxy.origin(9001, "127.0.0.1")
 
         router.route("/api/login")
             .handler(BodyHandler.create())
@@ -63,7 +72,12 @@ class HttpConnector(private val authService: AuthService,
 //            .respond { ctx -> Future.succeededFuture(JsonObject().put("status",middlewareStatusService.currentStatus()))}
         router.route("/api/resources/private/*").handler(JWTAuthHandler.create(jwtAuthProvider))
         router.route("/api/resources/*").handler {
-            ctx -> vertxHandler.handle(ctx.request())
+            ctx ->
+            val req = ctx.request()
+            vertxHandler.handle(req)
+        }
+        router.route("/mqtt/*").handler {
+                ctx -> proxy.handle(ctx.request())
         }
 
         server

@@ -5,12 +5,10 @@
 import {IClientOptions} from "mqtt/types/lib/client-options";
 
 const mqtt_parameters: IClientOptions = {
-  host: "82.165.32.84",
-  hostname: "dev.fieldtracks.org",
-  port: 8882,
-  protocol: "wss",
-  username: "esp32-dev-1",
-  password: ""
+  path: "/mqtt",
+  hostname: "localhost",
+  port: 8080,
+  protocol: "ws",
 }
 
 export const environment = {

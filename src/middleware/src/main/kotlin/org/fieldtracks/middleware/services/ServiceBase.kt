@@ -6,6 +6,9 @@ import org.fieldtracks.middleware.createObjectMapper
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.function.BiFunction
 import kotlin.concurrent.timerTask
 
@@ -14,6 +17,10 @@ abstract class ServiceBase(
     private val schedule: Schedule? = null,
     flushTopics: List<String> = emptyList())
  {
+
+     companion object {
+         val executor = Executors.newFixedThreadPool(1)!!
+     }
 
      private val logger = LoggerFactory.getLogger(ServiceBase::class.java)
 
@@ -76,8 +83,10 @@ abstract class ServiceBase(
                 logger.warn("Discarding empty message in {} - message: {}", topic, msg)
             }
             try {
-                val converted = converter.apply(topic, msg.payload)
-                listener(topic, converted)
+                executor.submit {
+                    val converted = converter.apply(topic, msg.payload)
+                    listener(topic, converted)
+                }
             } catch (t: Throwable) {
                 logger.warn("Skipping message due to error in topic '{} - message: '{}'", topic, msg, t)
             }

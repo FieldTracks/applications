@@ -1,0 +1,11 @@
+middleware:
+  beacon-max-age-seconds: 16
+  report-max-age-seconds: 16
+  scan-interval-seconds: 4
+  mqtt-url: "tcp://localhost:1883"
+  mqtt-user: ""
+  mqtt-password: ""
+
+quarkus:
+  resteasy:
+    path: "/api"

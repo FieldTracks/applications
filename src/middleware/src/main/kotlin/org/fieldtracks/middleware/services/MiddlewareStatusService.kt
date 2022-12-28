@@ -10,20 +10,26 @@ import org.eclipse.paho.client.mqttv3.IMqttClient
 @Path("/status")
 class MiddlewareStatusService(private val client: IMqttClient, private val authService: AuthService) {
 
+
+
     enum class Status {
         DISCONNECTED, INSTALLER, RUNNING
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    fun currentStatus(): Status {
+    fun currentStatus(): MiddlewareStatus {
         return if(!client.isConnected) {
-            Status.DISCONNECTED
+            MiddlewareStatus(Status.DISCONNECTED)
         } else if(authService.adminPasswordSet()) {
-            Status.RUNNING
+            MiddlewareStatus(Status.RUNNING)
         } else {
-            Status.INSTALLER
+            MiddlewareStatus(Status.INSTALLER)
         }
     }
+
+    data class MiddlewareStatus(
+        val status:Status
+    )
 
 }

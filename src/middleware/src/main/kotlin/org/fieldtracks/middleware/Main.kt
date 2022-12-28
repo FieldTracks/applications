@@ -29,8 +29,6 @@ class Middleware(
     keyStoreSecret: CharArray,
     flushUser: Boolean
 ) {
-    private val doSimulate = simulate == null
-
     private val mqttConnector = MqttConnector(mqttURL,mqttUser,mqttPassword)
 
     private val nameService = NameService(mqttConnector.mqttClient, flushNames = flushNames)

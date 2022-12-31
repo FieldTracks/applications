@@ -1,8 +1,8 @@
 import {AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Forcesimulation} from "./forcesimulation";
-import {MqttService} from "../../mqtt.service";
 import {Subscription} from "rxjs";
 import {ScanGraph} from "./model";
+import {WebsocketService} from "../../websocket.service";
 
 @Component({
   selector: 'app-d3-force',
@@ -13,7 +13,7 @@ export class D3ForceComponent implements AfterViewInit, OnDestroy {
 
 
 
-  constructor(private mqttService: MqttService) {
+  constructor(private wsService: WebsocketService) {
 
   }
 
@@ -33,7 +33,7 @@ export class D3ForceComponent implements AfterViewInit, OnDestroy {
     this.force.start()
     this.resizeCanvas()
 
-    this.aggregatedNamesSubscription = this.mqttService.mqttTopic<ScanGraph>("Aggregated/scan").subscribe(
+    this.aggregatedNamesSubscription = this.wsService.webSocketTopic<ScanGraph>("graph").subscribe(
       (next:ScanGraph) => {
         this.force.updateData(next)
         this.force.paint()

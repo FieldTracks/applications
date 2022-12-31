@@ -1,6 +1,13 @@
 package org.fieldtracks.mqtt
 
 import io.quarkus.arc.DefaultBean
+import io.smallrye.reactive.messaging.annotations.Broadcast
+import io.smallrye.reactive.messaging.annotations.Merge
+import io.vertx.core.impl.ConcurrentHashSet
+import org.eclipse.microprofile.reactive.messaging.Channel
+import org.eclipse.microprofile.reactive.messaging.Emitter
+import org.eclipse.microprofile.reactive.messaging.OnOverflow
+import org.fieldtracks.ChannelNames
 import org.fieldtracks.FlushConfiguration
 import org.fieldtracks.MiddlewareConfiguration
 import org.fieldtracks.middleware.model.BeaconStatusReport
@@ -12,13 +19,20 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import javax.enterprise.context.ApplicationScoped
 import javax.inject.Inject
 import javax.inject.Named
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
+
+abstract class ScanMqttServiceBase: AbstractServiceBase() {
+    val aggregatedGraphListeners = ConcurrentHashSet<(graph: ScanGraph) -> Unit>()
+    val aggregatedBeaconStatusReportListeners = ConcurrentHashSet<(report: BeaconStatusReport) -> Unit>()
+
+    abstract val lastGraph: ScanGraph
+    abstract val lastBeaconStatus: BeaconStatusReport
+
+}
 
 @ApplicationScoped
 @Named("scanMqttService")
 @DefaultBean
-class ScanMqttService(): AbstractServiceBase() {
+class ScanMqttService(): ScanMqttServiceBase() {
 
     private val logger = LoggerFactory.getLogger(ScanMqttService::class.java)
 
@@ -27,8 +41,15 @@ class ScanMqttService(): AbstractServiceBase() {
     @Volatile
     private var currentGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
 
+
     @Volatile
     private var currentBeaconStatus = BeaconStatusReport(HashMap())
+
+    override val lastGraph: ScanGraph
+        get() = currentGraph
+    override val lastBeaconStatus: BeaconStatusReport
+        get() = currentBeaconStatus
+
 
     private val aggregationTopic = "Aggregated/scan"
 
@@ -47,6 +68,8 @@ class ScanMqttService(): AbstractServiceBase() {
     override val flushTopics: List<String>
         get() = vT(fCfg.flushGraph to "Aggregated/scan", fCfg.flushBeaconStatus to "Aggregated/beaconStatus" )
 
+
+
     override fun onTimerTriggered() {
         val entries = HashSet<ScanReportMessage>()
         entries.addAll(reportQueue.toList())
@@ -63,11 +86,13 @@ class ScanMqttService(): AbstractServiceBase() {
     private fun updateGraph(entries: Set<ScanReportMessage>) {
         currentGraph = currentGraph.update(entries,cfg.beaconMaxAgeSeconds(),nameResolver)
         publishMQTTJson(aggregationTopic, currentGraph)
+        aggregatedGraphListeners.forEach { it.invoke(currentGraph) }
     }
 
     private fun updateBeaconStatus(entries: Set<ScanReportMessage>) {
         currentBeaconStatus = currentBeaconStatus.update(entries,nameResolver)
         publishMQTTJson("Aggregated/beaconStatus", currentBeaconStatus)
+        aggregatedBeaconStatusReportListeners.forEach { it.invoke(currentBeaconStatus) }
     }
 
     override fun onMqttConnectedInitially() {
@@ -87,6 +112,8 @@ class ScanMqttService(): AbstractServiceBase() {
             this.currentGraph = data
         }
     }
+
+
 
 }
 

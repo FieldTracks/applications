@@ -50,3 +50,7 @@ class FlushConfiguration(): CliktCommand(){
 fun main(args: Array<String>) {
     Quarkus.run(*args)
 }
+object ChannelNames{
+    const val aggregatedGraph = "aggregatedGraph"
+    const val aggregatedBeaconStatusReport = "aggregatedBeaconStatusReport"
+}

@@ -11,9 +11,16 @@ const mqtt_parameters: IClientOptions = {
   protocol: "ws",
 }
 
+const apiParameters = {
+  http_base: "http://localhost:8080/api",
+  ws_base: "ws://localhost:8080/api/ws"
+}
+
+
 export const environment = {
   production: false,
-  mqtt_options: mqtt_parameters
+  mqtt_options: mqtt_parameters,
+  api_parameters: apiParameters
 };
 
 /*

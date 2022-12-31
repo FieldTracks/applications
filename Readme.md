@@ -30,6 +30,12 @@ docker run --rm --name mqtt -it -p 9001:9001 -v $(pwd)/src/middleware/src/test/r
 Middleware is designed as a CLI-application that is deployed alongside the MQTT-Broker. Typically,
 it connects to localhost, whereby not needing any credentials. However, different connection-settings can be configured.
 
+Note: Currently, middleware undergoes to refactoring that makes it a Quarkus application.
+
+Notes (unsorted)
+
+* Generating a JWT-key before 
+
 ### Building and Running
 
 Middleware is built using gradle. Using the [distribution plugin](https://docs.gradle.org/current/userguide/distribution_plugin.html), various artifacts (.zip, .tar, local dir ) can be created:

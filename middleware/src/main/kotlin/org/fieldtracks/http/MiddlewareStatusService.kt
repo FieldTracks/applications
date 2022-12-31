@@ -1,7 +1,6 @@
-package org.fieldtracks.rest
+package org.fieldtracks.http
 
 
-import org.eclipse.paho.client.mqttv3.IMqttClient
 import org.fieldtracks.mqtt.MqttServices
 import javax.inject.Inject
 import javax.ws.rs.GET

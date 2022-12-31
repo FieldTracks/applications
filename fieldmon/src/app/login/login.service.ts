@@ -29,7 +29,7 @@ export class LoginService {
 
     return timer(0,5000).pipe(
       mergeMap(_ => {
-        return this.http.get<ServerStatus>("/api/resources/status").pipe(
+        return this.http.get<ServerStatus>("/api/status").pipe(
           catchError(val => of({status: <ServerStatusType>`UNREACHABLE`, error: val}))
         )
       })
@@ -47,7 +47,7 @@ export class LoginService {
 
   private setSession(token: { token: string }) {
     const authResult: any = jwt_decode(token['token'])
-    console.log("Token: ", authResult)
+    console.log("Token received")
     const expires_epoch = authResult.exp;
     localStorage.setItem('id_token', token['token']);
     localStorage.setItem('expires_at', expires_epoch );

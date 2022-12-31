@@ -9,3 +9,22 @@ middleware:
 quarkus:
   resteasy:
     path: "/api"
+  native:
+    resources:
+      includes: "publicKey.pem"
+
+smallrye:
+  jwt:
+    sign:
+      key:
+        location: privateKey.pem
+    encrypt:
+      key:
+        location: publicKey.pem
+
+mp:
+  jwt:
+    verify:
+      publickey:
+        location: publicKey.pem
+      issuer: "https://fieldtracks.org"

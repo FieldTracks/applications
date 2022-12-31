@@ -19,7 +19,7 @@ class MqttServices(
     val nameService: NameMqttService,
     val authService: AuthMqttService,
     val stoneStatusService: StoneStatusMqttService,
-    @Named("scanMqttService") val aggregatorService: AbstractServiceBase
+    @Named("scanMqttService") val aggregatorService: ScanMqttServiceBase
 ) {
 
 

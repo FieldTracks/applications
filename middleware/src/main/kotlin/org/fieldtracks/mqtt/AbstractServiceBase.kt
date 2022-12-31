@@ -1,6 +1,7 @@
 package org.fieldtracks.mqtt
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.smallrye.mutiny.Multi
 import org.eclipse.paho.client.mqttv3.IMqttClient
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -134,3 +135,4 @@ fun <T> vT(vararg entryByFlag: Pair<Boolean, T>): List<T> {
 fun interface NameResolver {
     fun resolve(id: String): String
 }
+

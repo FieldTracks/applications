@@ -2,10 +2,12 @@ package org.fieldtracks.mqtt.simulator
 
 import org.fieldtracks.FlushConfiguration
 import org.fieldtracks.MiddlewareConfiguration
+import org.fieldtracks.middleware.model.BeaconStatusReport
 import org.fieldtracks.middleware.model.GraphLink
 import org.fieldtracks.middleware.model.GraphNode
 import org.fieldtracks.middleware.model.ScanGraph
 import org.fieldtracks.mqtt.AbstractServiceBase
+import org.fieldtracks.mqtt.ScanMqttServiceBase
 import org.fieldtracks.mqtt.Schedule
 import org.fieldtracks.mqtt.vT
 import java.math.BigInteger
@@ -16,7 +18,7 @@ import kotlin.random.Random
 import kotlin.random.asJavaRandom
 
 
-open class AbstractSimulatorMqttService(private val stoneCnt: Int, beaconCnt: Int): AbstractServiceBase() {
+open class AbstractSimulatorMqttService(private val stoneCnt: Int, beaconCnt: Int): ScanMqttServiceBase() {
 
     @Inject
     protected lateinit var cfg: MiddlewareConfiguration
@@ -38,6 +40,15 @@ open class AbstractSimulatorMqttService(private val stoneCnt: Int, beaconCnt: In
     private val beaconNodes = (1 .. beaconCnt). map {
         randomBeacon()
     }
+    override val lastGraph: ScanGraph
+        get() = currentGraph
+    override val lastBeaconStatus: BeaconStatusReport
+        get() = currentBeaconStatus
+
+    private var currentGraph = ScanGraph(ArrayList(), ArrayList(), Instant.now())
+    private var currentBeaconStatus = BeaconStatusReport(HashMap())
+
+
     override val schedule: Schedule
         get() = Schedule(cfg.scanIntervalSeconds())
 
@@ -71,6 +82,8 @@ open class AbstractSimulatorMqttService(private val stoneCnt: Int, beaconCnt: In
     }
 
     private fun publish(graph: ScanGraph) {
+        currentGraph = graph
+        aggregatedGraphListeners.forEach { it.invoke(currentGraph) }
         publishMQTTJson("Aggregated/scan", graph)
     }
 

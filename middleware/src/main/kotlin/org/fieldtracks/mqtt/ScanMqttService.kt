@@ -27,11 +27,11 @@ abstract class ScanMqttServiceBase: AbstractServiceBase() {
     abstract val lastGraph: ScanGraph
     abstract val lastBeaconStatus: BeaconStatusReport
 
-    @Inject
-    @Channel("aggregatedGraph")
-    @Broadcast
-    @OnOverflow(OnOverflow.Strategy.DROP, bufferSize = 1)
-    lateinit var graphEmitter: Emitter<ScanGraph>
+//    @Inject
+//    @Channel("aggregatedGraph")
+//    @Broadcast
+//    @OnOverflow(OnOverflow.Strategy.DROP, bufferSize = 1)
+//    lateinit var graphEmitter: Emitter<ScanGraph>
 
 }
 
@@ -93,7 +93,7 @@ class ScanMqttService(): ScanMqttServiceBase() {
         currentGraph = currentGraph.update(entries,cfg.beaconMaxAgeSeconds(),nameResolver)
         publishMQTTJson(aggregationTopic, currentGraph)
         aggregatedGraphListeners.forEach { it.invoke(currentGraph) }
-        graphEmitter.send(currentGraph)
+//        graphEmitter.send(currentGraph)
     }
 
     private fun updateBeaconStatus(entries: Set<ScanReportMessage>) {

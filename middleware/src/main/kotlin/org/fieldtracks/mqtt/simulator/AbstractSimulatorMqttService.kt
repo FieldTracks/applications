@@ -75,6 +75,7 @@ open class AbstractSimulatorMqttService(private val stoneCnt: Int, beaconCnt: In
         }
         val graph = ScanGraph(ArrayList(graphNodes), ArrayList(graphLinks), Instant.now())
         publish(graph)
+        graphEmitter.send(graph)
 
     }
 

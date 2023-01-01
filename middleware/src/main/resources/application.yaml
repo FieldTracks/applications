@@ -5,9 +5,19 @@ middleware:
   mqtt-url: "tcp://localhost:1883"
   mqtt-user: ""
   mqtt-password: ""
+  firmware-download-dir: "/JellingStoneFirmware"
+
+"%dev":
+  middleware:
+    firmware-download-dir: "/var/tmp"
+
+"%sim":
+  middleware:
+    firmware-download-dir: "/var/tmp"
+
 
 quarkus:
-  resteasy:
+  resteasy-reactive:
     path: "/api"
   native:
     resources:
@@ -28,3 +38,11 @@ mp:
       publickey:
         location: publicKey.pem
       issuer: "https://fieldtracks.org"
+#  messaging:
+#    incoming:
+#      aggregatedGraph:
+#          connector: dummy
+#    outgoing:
+#      aggregatedGraph:
+#        connector: dummy
+

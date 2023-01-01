@@ -18,6 +18,7 @@ export class WebsocketService {
             subject.refCount--
             if (subject.refCount <= 0) {
               ManagedSubjectWebsocket.removeSubject(endpoint)
+              subject.close()
             }
           }
         }
@@ -30,24 +31,38 @@ export class WebsocketService {
 }
 class ManagedSubjectWebsocket {
   private static SUBJECTS_BY_CHANNEL = new Map<String, ManagedSubjectWebsocket>()
-  private ws: WebSocket
+  public ws: WebSocket
 
-  constructor(public endpoint: string, public subject: Subject<any>, public refCount: number) {
+  constructor(public endpoint: string, public subject: Subject<any>, public refCount: number, private tokenProvider: BehaviorSubject<string>) {
   }
 
   static subjectForChannel(endpoint: string, tokenProvider: BehaviorSubject<string> ): ManagedSubjectWebsocket {
     let subject = ManagedSubjectWebsocket.SUBJECTS_BY_CHANNEL.get(endpoint)
     if (!subject || subject.refCount < 1) {
-      subject = new ManagedSubjectWebsocket(endpoint, new Subject<any>(), 1)
+      subject = new ManagedSubjectWebsocket(endpoint, new Subject<any>(), 1, tokenProvider)
       ManagedSubjectWebsocket.SUBJECTS_BY_CHANNEL.set(endpoint, subject)
-      subject.assignWebsocket(tokenProvider)
+      subject.assignWebsocket()
     } else {
       subject.refCount++
     }
     return subject
   }
 
-  assignWebsocket(tokenProvider: BehaviorSubject<string>) {
+  close() {
+    if (this.ws != null) {
+      console.log("Websocket exists - try closing first")
+      try {
+        this.ws.close();
+        console.log("Closed")
+      } catch (e) {
+        console.log("Error closing websocket")
+      }
+    }
+  }
+
+  assignWebsocket() {
+    this.close()
+
     console.log("Creating websocket for", this.endpoint)
     let ws = new WebSocket(environment.api_parameters.ws_base + "/" + this.endpoint)
     let that = this;
@@ -56,16 +71,16 @@ class ManagedSubjectWebsocket {
     }
     ws.onerror = (e) => {
       console.log("Error in websocket", e)
+      console.log("Re-initializing websocket in 3 seconds")
+      setTimeout(function () {
+        that.assignWebsocket()
+      }, 3000);
     }
     ws.onclose = (e) => {
       console.log("Closing websocket",e)
-      console.log("Re-initializing websocket in 3 seconds")
-      setTimeout(function () {
-        that.assignWebsocket(tokenProvider)
-      }, 3000);
     }
     ws.onopen = () => {
-      ws.send(tokenProvider.getValue())
+      ws.send(that.tokenProvider.getValue())
     }
   }
 

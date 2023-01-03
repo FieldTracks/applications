@@ -3,15 +3,16 @@ import {BehaviorSubject, catchError, map, mergeMap, Observable, of, tap, timer} 
 import * as moment from 'moment';
 
 import {
-  HttpClient, HttpErrorResponse,
+  HttpClient,
+  HttpErrorResponse,
   HttpEvent,
+  HttpEventType,
   HttpHandler,
-  HttpHeaders,
   HttpInterceptor,
-  HttpRequest,
-  HttpUrlEncodingCodec
+  HttpRequest, HttpResponse
 } from "@angular/common/http";
 import jwt_decode from "jwt-decode";
+import {EventbusService} from "../eventbus.service";
 
 @Injectable({
   providedIn: 'root',
@@ -19,7 +20,11 @@ import jwt_decode from "jwt-decode";
 export class LoginService {
 
   tokenSubject = new BehaviorSubject<string>(localStorage.getItem('id_token') || 'token');
-  constructor(private http: HttpClient) {  }
+  constructor(private http: HttpClient, private eventbus: EventbusService) {
+    if (this.isLoggedIn()) {
+      eventbus.onLoginStatusChange.next(true)
+    }
+  }
 
   token(): BehaviorSubject<string> {
     return this.tokenSubject;
@@ -52,12 +57,14 @@ export class LoginService {
     localStorage.setItem('id_token', token['token']);
     localStorage.setItem('expires_at', expires_epoch );
     this.tokenSubject.next(token['token']);
+    this.eventbus.onLoginStatusChange.next(true)
   }
 
 
   logout() {
     localStorage.removeItem('id_token');
     localStorage.removeItem('expires_at');
+    this.eventbus.onLoginStatusChange.next(false)
   }
 
   public isLoggedIn() {
@@ -81,6 +88,10 @@ export class LoginService {
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
+  constructor(private loginService: LoginService) {
+  }
+
+
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
     const idToken = localStorage.getItem('id_token');
@@ -89,7 +100,13 @@ export class AuthInterceptor implements HttpInterceptor {
       const cloned = req.clone({
         headers: req.headers.set('Authorization', 'Bearer ' + idToken)
       });
-      return next.handle(cloned);
+      return next.handle(cloned).pipe(tap( (event) => {
+        if (event instanceof HttpResponse) {
+          if (event.status == 401 || event.status == 403 ) {
+            this.loginService.logout()
+          }
+        }
+      }));
     } else {
       return next.handle(req);
     }

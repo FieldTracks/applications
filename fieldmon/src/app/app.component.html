@@ -1,1 +1,43 @@
-<router-outlet></router-outlet>
+<mat-sidenav-container>
+
+  <mat-sidenav mode="over" #sidenav role="navigation">
+    <mat-nav-list>
+      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async" routerLink="/stone-overview" (click)="sidenav.close()">
+        <mat-icon>developer_board</mat-icon>
+        <span class="nav-caption">Stones</span>
+      </a>
+      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  routerLink='/sensor-contacts' (click)="sidenav.close()">
+        <mat-icon>settings_remote</mat-icon>
+        <span class="nav-caption">Contacts</span>
+      </a>
+      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"   routerLink='/graph' (click)="sidenav.close()">
+        <mat-icon>my_location</mat-icon>
+        <span class="nav-caption">Graph</span>
+      </a>
+      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  routerLink='/names' (click)="sidenav.close()">
+        <mat-icon>dns</mat-icon>
+        <span class="nav-caption">Names</span>
+      </a>
+      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  (click)="logout()"  routerLink='/login'>
+        <mat-icon>eject</mat-icon>
+        <span class="nav-caption">Logout</span>
+      </a>
+
+      <a mat-list-item *ngIf="!(this.eventbus.onLoginStatusChange | async)"  (click)="logout()"  routerLink='/login'>
+        <mat-icon>face</mat-icon>
+        <span class="nav-caption">Login</span>
+      </a>
+
+
+    </mat-nav-list>
+
+
+
+  </mat-sidenav>
+  <mat-sidenav-content>
+    <router-outlet>
+
+    </router-outlet>
+  </mat-sidenav-content>
+</mat-sidenav-container>
+

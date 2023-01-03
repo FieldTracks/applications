@@ -1,23 +1,48 @@
-import {Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {AfterContentInit, Component, ElementRef, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Router} from "@angular/router";
 import {LoginService} from "./login/login.service";
+import {EventbusService} from "./eventbus.service";
+import {MatSidenav} from "@angular/material/sidenav";
+import {Subject, Subscription} from "rxjs";
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.sass']
 })
-export class AppComponent  {
+export class AppComponent implements AfterContentInit, OnDestroy  {
   title = 'app';
 
-  constructor(private router: Router, private loginService: LoginService) {
+  private sideBarSubscription: Subscription
+  @ViewChild("sidenav") sidenav: MatSidenav
+
+
+  constructor(private router: Router, public loginService: LoginService, public eventbus: EventbusService) {
     if(loginService.isLoggedOut()) {
       router.navigate(['login'])
     }
   }
 
+
+  ngAfterContentInit() {
+    this.sideBarSubscription = this.eventbus.onSidenavToggle.subscribe(() => {
+      this.sidenav.toggle()
+    })
+  }
+
+  ngOnDestroy() {
+    if (this.sideBarSubscription != null) {
+      this.sideBarSubscription.unsubscribe()
+    }
+  }
+
+  logout() {
+    this.loginService.logout()
+    this.sidenav.close()
+  }
+
   // showToggle: boolean;
-  // openSidenav = false;
+  //openSidenav = false;
   // private subscription: Subscription;
   // searchString: string;
   //

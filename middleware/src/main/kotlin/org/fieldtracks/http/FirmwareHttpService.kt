@@ -77,6 +77,7 @@ class FirmwareHttpService {
 
     }
 
+    @Synchronized
     fun downloadFromGithub(logWriter: MultiEmitter<in String>) {
         logWriter.emit("Connecting to github\n")
         val github = GitHub.connectAnonymously()

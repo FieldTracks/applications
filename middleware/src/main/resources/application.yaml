@@ -1,20 +1,15 @@
 middleware:
   beacon-max-age-seconds: 16
   report-max-age-seconds: 16
-  scan-interval-seconds: 4
+  scan-interval-seconds: 8
   mqtt-url: "tcp://localhost:1883"
   mqtt-user: ""
   mqtt-password: ""
-  firmware-download-dir: "/JellingStoneFirmware"
+  firmware-download-dir: "./firmware_download"
 
-"%dev":
+"%prod":
   middleware:
-    firmware-download-dir: "/var/tmp"
-
-"%sim":
-  middleware:
-    firmware-download-dir: "/var/tmp"
-
+    firmware-download-dir: "/JellingStoneFirmware"
 
 quarkus:
   resteasy-reactive:

@@ -1,11 +1,12 @@
 middleware:
-  beacon-max-age-seconds: 16
-  report-max-age-seconds: 16
+  beacon-max-age-seconds: 32
+  report-max-age-seconds: 32
   scan-interval-seconds: 8
   mqtt-url: "tcp://localhost:1883"
   mqtt-user: ""
   mqtt-password: ""
-  firmware-download-dir: "./firmware_download"
+  firmware-download-dir: "/var/tmp"
+  jellingstone-webdav-url: "https://webdav.fieldtracks.org/JellingStone/"
 
 "%prod":
   middleware:

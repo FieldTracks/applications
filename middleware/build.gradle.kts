@@ -28,7 +28,7 @@ dependencies {
     implementation("io.quarkus:quarkus-arc")
     implementation("com.github.ajalt.clikt:clikt:3.5.0")
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
-    implementation("org.kohsuke:github-api:1.313")
+    implementation("com.github.lookfirst:sardine:5.10")
 
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")

@@ -31,6 +31,8 @@ interface MiddlewareConfiguration {
     fun mqttUser(): Optional<String>
     fun mqttPassword(): Optional<String>
 
+    fun jellingstoneWebdavUrl(): String
+
     fun firmwareDownloadDir(): String
 
     // https://github.com/smallrye/smallrye-config/issues/844

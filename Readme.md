@@ -20,11 +20,7 @@ It can aggregate scan data, simulate stones and handles naming.
 * **StoneFlashtool** is not adapted to the new wire protocol, however, there's hardly anything to adapt.
 The perspective to replace this tool by a web-usb based installer for easier deployment and installation
 
-Typically, a local MQTT-broker is utilized for development. Using docker, it can be started this way:
-```bash
-docker run --rm --name mqtt -it -p 9001:9001 -v $(pwd)/src/middleware/src/test/resources/docker-mqtt/mosquitto.conf eclipse-mosquitto
-```
-
+Typically, a local MQTT-broker is utilized for development. `contrib/docker-compose.yml` contains an example configuration for starting a mqtt-container.
 ## Middleware
 
 Middleware is designed as a CLI-application that is deployed alongside the MQTT-Broker. Typically,

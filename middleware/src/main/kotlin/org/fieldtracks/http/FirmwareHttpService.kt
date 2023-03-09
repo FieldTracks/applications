@@ -3,6 +3,12 @@ package org.fieldtracks.http
 import com.github.sardine.SardineFactory
 import io.smallrye.mutiny.Multi
 import io.smallrye.mutiny.subscription.MultiEmitter
+import org.apache.http.auth.AuthScope
+import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.BasicCookieStore
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.impl.client.HttpClientBuilder
 import org.fieldtracks.MiddlewareConfiguration
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -23,6 +29,8 @@ import kotlin.concurrent.thread
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.getLastModifiedTime
+import kotlin.jvm.optionals.getOrDefault
+import kotlin.jvm.optionals.getOrNull
 
 
 @Path("/firmware")
@@ -36,6 +44,8 @@ class FirmwareHttpService {
     @Inject
     protected lateinit var cfg: MiddlewareConfiguration
 
+
+
     @Produces("text/plain")
     @Path("/update_repo")
     @GET
@@ -43,6 +53,7 @@ class FirmwareHttpService {
         return Multi.createFrom().emitter {
             thread(start = true) {
                 downloadFromWebdav(it)
+                it.complete()
             }
         }
     }
@@ -81,42 +92,45 @@ class FirmwareHttpService {
     @Synchronized
     fun downloadFromWebdav(logWriter: MultiEmitter<in String>) {
         logWriter.emit("Connecting to ${cfg.jellingstoneWebdavUrl()}\n")
-        val sardine = SardineFactory.begin()
+        val sardine = if(cfg.jellingstoneWebdavUser().isPresent || cfg.jellingstoneWebdavPassword().isPresent) {
+            SardineFactory.begin(cfg.jellingstoneWebdavUser().orElse(""),cfg.jellingstoneWebdavPassword().orElse(""))
+        } else {
+            SardineFactory.begin()
+        }
         val downloadFolder = cfg.firmwareDownloadDir()
 
         sardine.list(cfg.jellingstoneWebdavUrl(),1,true).forEach { webdavResrouce ->
-        val target = Paths.get(downloadFolder, webdavResrouce.name)
-        if(target.extension.lowercase() == "zip") {
-            logWriter.emit("Found release ${webdavResrouce.name} - last change: ${webdavResrouce.modified} \n")
-            if ((!target.exists() || webdavResrouce.modified.time > target.getLastModifiedTime().toMillis())) {
-                logWriter.emit("Downloading ${webdavResrouce.href} \n")
-                val path = toAbsoluteURLPath(webdavResrouce.href)
-                URL(path).openStream().use {
-                    Files.copy(it, target)
+            val target = Paths.get(downloadFolder, webdavResrouce.name)
+            if(target.extension.lowercase() == "zip") {
+                logWriter.emit("Found release ${webdavResrouce.name} - last change: ${webdavResrouce.modified} \n")
+                if ((!target.exists() || webdavResrouce.modified.time > target.getLastModifiedTime().toMillis())) {
+                    try {
+                        downloadFirmware(webdavResrouce.href, target, logWriter)
+                        validateZIPFile(target, logWriter)
+                    } catch (e: Exception) {
+                        logger.warn("Bogus download {} - deleting ", target, e)
+                        Files.deleteIfExists(target)
+                    }
+                    logWriter.emit("Is valid\n")
+                } else {
+                    logWriter.emit("Already downloaded - skipping\n")
                 }
-                logWriter.emit("Validating \n")
-                try {
-                    validateZIPFile(target)
-                } catch (e: Exception) {
-                    logger.warn("Corrupt ZIP-file {} - deleting ", target, e)
-                    logWriter.emit("Corrupt ZIP-file $target ${e.message} - deleting \n")
-                    Files.deleteIfExists(target)
-                }
-                logWriter.emit("Is valid\n")
-
-            } else {
-                logWriter.emit("Already downloaded - skipping\n")
             }
         }
-
     }
 
 
-        try {
+    fun downloadFirmware(path: URI, target: java.nio.file.Path, logWriter: MultiEmitter<in String>) {
+        logWriter.emit("Downloading ${path.toASCIIString()} \n")
+        val request = HttpGet(toAbsoluteURLPath(path))
+        val cProv = BasicCredentialsProvider()
+        val user = cfg.jellingstoneWebdavUser().orElse("")
+        val password = cfg.jellingstoneWebdavPassword().orElse("")
+        cProv.setCredentials(AuthScope.ANY,UsernamePasswordCredentials(user,password))
+        val client = HttpClientBuilder.create().setDefaultCredentialsProvider(cProv).build()
 
-        } catch (e: Exception) {
-            logger.warn("Error downloading firmware", e)
-            logWriter.emit(e.message)
+        client.execute(request).use {
+            Files.copy(it.entity.content, target)
         }
     }
 
@@ -130,21 +144,25 @@ class FirmwareHttpService {
         return "${u.protocol}://${u.host}${p}/$relativeWebDAVURI"
     }
 
-    fun validateZIPFile(file: java.nio.file.Path) {
+    fun validateZIPFile(file: java.nio.file.Path, logWriter: MultiEmitter<in String>) {
+        logWriter.emit("Validating \n")
         val expected = mutableSetOf("JellingStone/JellingStone.bin", "JellingStone/bootloader.bin", "JellingStone/partition-table.bin")
 
         ZipFile(file.toFile()).use { zipFile ->
             zipFile.entries().iterator().forEach {
                 it.crc
                 if(!expected.remove(it.name)) {
-                    throw java.lang.RuntimeException("ZIP-Entry ${it.name} is not supposed to be in archive")
+                    val msg = "ZIP-Entry ${it.name} is not supposed to be in archive"
+                    logWriter.emit("Corrupt ZIP-file $file ${msg}\n")
+                    throw RuntimeException(msg)
                 }
             }
         }
         if(expected.isNotEmpty()) {
-            throw RuntimeException("Missing artifacts in archive: ${expected.joinToString(",") { it }}")
+            val msg = "Missing artifacts in archive: ${expected.joinToString(",") { it }}"
+            logWriter.emit(msg)
+            throw RuntimeException(msg)
         }
-
     }
 
     data class FirmwareFile(

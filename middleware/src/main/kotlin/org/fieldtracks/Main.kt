@@ -33,11 +33,17 @@ interface MiddlewareConfiguration {
 
     fun jellingstoneWebdavUrl(): String
 
+    fun jellingstoneWebdavUser(): Optional<String>
+
+    fun jellingstoneWebdavPassword(): Optional<String>
+
+
     fun firmwareDownloadDir(): String
 
     // https://github.com/smallrye/smallrye-config/issues/844
     fun mqttUserO() = mqttUser().orElse(null)
     fun mqttPasswordO() = mqttPassword().orElse(null)
+
 }
 
 class FlushConfiguration(): CliktCommand(){

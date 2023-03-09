@@ -6,7 +6,9 @@ middleware:
   mqtt-user: ""
   mqtt-password: ""
   firmware-download-dir: "/var/tmp"
-  jellingstone-webdav-url: "https://webdav.fieldtracks.org/JellingStone/"
+  jellingstone-webdav-url: "https://cloud.fieldtracks.org/public.php/webdav/"
+  jellingstone-webdav-user: "LDaWDb6CdjbLWEP"
+#  jellingstone-webdav-password: ""
 
 "%prod":
   middleware:

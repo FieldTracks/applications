@@ -11,6 +11,9 @@ import javax.enterprise.context.ApplicationScoped
 import javax.ws.rs.Produces
 
 
+fun main(args: Array<String>) {
+    Quarkus.run(*args)
+}
 class Main {
 
     @Produces
@@ -57,9 +60,7 @@ class FlushConfiguration(): CliktCommand(){
     }
 }
 
-fun main(args: Array<String>) {
-    Quarkus.run(*args)
-}
+
 object ChannelNames{
     const val aggregatedGraph = "aggregatedGraph"
     const val aggregatedBeaconStatusReport = "aggregatedBeaconStatusReport"

@@ -2,22 +2,29 @@
 
   <mat-sidenav mode="over" #sidenav role="navigation">
     <mat-nav-list>
-      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async" routerLink="/stone-overview" (click)="sidenav.close()">
-        <mat-icon>developer_board</mat-icon>
-        <span class="nav-caption">Stones</span>
-      </a>
-      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  routerLink='/sensor-contacts' (click)="sidenav.close()">
-        <mat-icon>settings_remote</mat-icon>
-        <span class="nav-caption">Contacts</span>
-      </a>
       <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"   routerLink='/graph' (click)="sidenav.close()">
         <mat-icon>my_location</mat-icon>
         <span class="nav-caption">Graph</span>
       </a>
-      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  routerLink='/names' (click)="sidenav.close()">
-        <mat-icon>dns</mat-icon>
-        <span class="nav-caption">Names</span>
+
+      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"   routerLink='/firmware-installer' (click)="sidenav.close()">
+        <mat-icon>add_circle</mat-icon>
+        <span class="nav-caption">Install Stone</span>
       </a>
+
+<!--      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async" routerLink="/stone-overview" (click)="sidenav.close()">-->
+<!--        <mat-icon>developer_board</mat-icon>-->
+<!--        <span class="nav-caption">Stones</span>-->
+<!--      </a>-->
+<!--      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  routerLink='/sensor-contacts' (click)="sidenav.close()">-->
+<!--        <mat-icon>settings_remote</mat-icon>-->
+<!--        <span class="nav-caption">Contacts</span>-->
+<!--      </a>-->
+<!--      <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  routerLink='/names' (click)="sidenav.close()">-->
+<!--        <mat-icon>dns</mat-icon>-->
+<!--        <span class="nav-caption">Names</span>-->
+<!--      </a>-->
+
       <a mat-list-item *ngIf="this.eventbus.onLoginStatusChange | async"  (click)="logout()"  routerLink='/login'>
         <mat-icon>eject</mat-icon>
         <span class="nav-caption">Logout</span>

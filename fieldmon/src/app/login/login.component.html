@@ -1,55 +1,17 @@
-<app-header-navbar></app-header-navbar>
+<!-- <app-header-navbar></app-header-navbar> -->
 
+<main class="form-signin">
+  <form>
+    <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
 
-<section id="login-section" *ngIf="serverStatus | async as status">
-  <h2 class="mat-h2" i18n *ngIf="status.status !== 'INSTALLER'">Login</h2>
-  <h2 class="mat-h2" i18n *ngIf="status.status === 'INSTALLER'">Installing Fieldtracks</h2>
-
-  <mat-spinner *ngIf="showSpinner" style="margin:0 auto;" mode="indeterminate"></mat-spinner>
-
-  <!-- Error states -->
-  <mat-error *ngIf="status.status === 'UNREACHABLE'">
-    Middleware is unreachable <br/>{{ status.error?.statusText }} (HTTP-{{status.error?.status}})
-  </mat-error>
-  <mat-error *ngIf="status.status === 'DISCONNECTED'">
-    Not connected to MQTT <br/> Check middleware-log for details
-  </mat-error>
-
-
-  <!-- Login-Form - middleware is running -->
-  <div *ngIf="status.status === 'RUNNING'">
-    <form [formGroup]="loginForm" (ngSubmit)="onLoginformSubmit()" #f="ngForm" *ngIf="!showSpinner">
-      <p *ngIf="connectionProblem">
-        <mat-error>Invalid credentials</mat-error>
-      </p>
-      <mat-form-field>
-        <input matInput placeholder="Username" formControlName="username">
-      </mat-form-field>
-      <mat-form-field>
-        <input matInput placeholder="Password" formControlName="password" type="password" name="password">
-      </mat-form-field>
-      <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary">Login</button>
-    </form>
-  </div>
-
-
-  <!-- Installer-Form - middleware is not set up, yet. -->
-  <div *ngIf="status.status === 'INSTALLER'">
-    <form [formGroup]="installerForm" (ngSubmit)="onRegisterformSubmit()" #f="ngForm" *ngIf="!showSpinner">
-      <h3>Create a user to continue</h3>
-      <mat-form-field>
-        <input matInput placeholder="Username" readonly formControlName="username" name="username">
-      </mat-form-field>
-      <mat-form-field>
-        <input matInput placeholder="Password" formControlName="password" type="password" name="password">
-      </mat-form-field>
-      <mat-form-field>
-        <input [errorStateMatcher]="isNotConfirmed" matInput placeholder="Confirm Password"
-               formControlName="passwordConfirmation" type="password" name="passwordConfirm">
-        <mat-error *ngIf="installerForm.errors?.['noMatch']">Passwords do not match</mat-error>
-      </mat-form-field>
-      <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary">Login</button>
-    </form>
-  </div>
-
-</section>
+    <div class="form-floating">
+      <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
+      <label for="floatingInput">Email address</label>
+    </div>
+    <div class="form-floating">
+      <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+      <label for="floatingPassword">Password</label>
+    </div>
+    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+  </form>
+</main>

@@ -24,6 +24,8 @@ import {MatCardModule} from "@angular/material/card";
 import {MatMenuModule} from "@angular/material/menu";
 import {MatSidenavModule} from "@angular/material/sidenav";
 import {MatListModule} from "@angular/material/list";
+import { FirmwareInstallerComponent } from './firmware-installer/firmware-installer.component';
+import {MatGridListModule} from "@angular/material/grid-list";
 @NgModule({
   declarations: [
     AppComponent,
@@ -31,7 +33,8 @@ import {MatListModule} from "@angular/material/list";
     HeaderNavbarComponent,
     GraphComponent,
     D3ForceComponent,
-    SettingsComponent
+    SettingsComponent,
+    FirmwareInstallerComponent
   ],
   imports: [
     BrowserModule,
@@ -50,7 +53,8 @@ import {MatListModule} from "@angular/material/list";
     MatMenuModule,
     MatIconModule,
     MatSidenavModule,
-    MatListModule
+    MatListModule,
+    MatGridListModule
   ],
   providers: [],
   bootstrap: [AppComponent]

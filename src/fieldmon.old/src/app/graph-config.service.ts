@@ -14,3 +14,7 @@ export class GraphConfigService {
 }
 
 
+export interface GraphConfig {
+  showLastContacts?: boolean;
+  showUnnamed?: boolean;
+}

@@ -134,7 +134,7 @@ export class GraphComponent implements OnInit, AfterContentInit, OnDestroy, FmCo
   }
 
   showUnnamed(v: boolean) {
-    this.graphConfig.showUnnamned = v;
+    this.graphConfig.showUnnamed = v;
     this.graphConfigService.currentConfig.next(this.graphConfig);
   }
 

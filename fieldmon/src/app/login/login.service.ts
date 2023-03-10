@@ -7,7 +7,7 @@ import {
   HttpErrorResponse,
   HttpEvent,
   HttpEventType,
-  HttpHandler,
+  HttpHandler, HttpHeaderResponse,
   HttpInterceptor,
   HttpRequest, HttpResponse
 } from "@angular/common/http";
@@ -101,8 +101,9 @@ export class AuthInterceptor implements HttpInterceptor {
         headers: req.headers.set('Authorization', 'Bearer ' + idToken)
       });
       return next.handle(cloned).pipe(tap( (event) => {
-        if (event instanceof HttpResponse) {
+        if (event instanceof HttpResponse || event instanceof HttpHeaderResponse) {
           if (event.status == 401 || event.status == 403 ) {
+            console.log("Token rejected - logging out")
             this.loginService.logout()
           }
         }

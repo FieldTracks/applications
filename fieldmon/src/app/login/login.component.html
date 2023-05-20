@@ -1,17 +1,72 @@
 <!-- <app-header-navbar></app-header-navbar> -->
 
-<main class="form-signin">
-  <form>
-    <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+<main class="form" *ngIf="serverStatus | async as status">
 
+  <h2 class="h3 mb-3 fw-norma" i18n *ngIf="status.status !== 'INSTALLER'">Please sign in</h2>
+  <h2 class="h3 mb-3 fw-norma" i18n *ngIf="status.status === 'INSTALLER'">Create a user to continue</h2>
+
+  <div class="alert alert-danger" role="alert" *ngIf="connectionProblem">
+    Invalid credentials
+  </div>
+
+  <div *ngIf="showSpinner" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <form *ngIf="!showSpinner && status.status === 'RUNNING'" [formGroup]="loginForm" (ngSubmit)="onLoginformSubmit()" #f="ngForm">
     <div class="form-floating">
-      <input type="email" class="form-control" id="floatingInput" placeholder="name@example.com">
-      <label for="floatingInput">Email address</label>
+      <input formControlName="username" name="username" class="form-control" id="floatingInput" placeholder="admin">
+      <label for="floatingInput">User</label>
     </div>
     <div class="form-floating">
-      <input type="password" class="form-control" id="floatingPassword" placeholder="Password">
+      <input formControlName="password" type="password" class="form-control" id="floatingPassword" placeholder="Password">
       <label for="floatingPassword">Password</label>
     </div>
-    <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+    <button class="w-100 btn btn-lg btn-primary" type="submit" [disabled]="f.invalid">Sign in</button>
   </form>
+
+
+  <!-- Installer-Form - middleware is not set up, yet. -->
+  <div *ngIf="status.status === 'INSTALLER'">
+    <form [formGroup]="installerForm" (ngSubmit)="onRegisterformSubmit()" #f="ngForm" *ngIf="!showSpinner">
+
+      <div class="form-floating">
+        <input formControlName="username" name="username" class="form-control"  id="floatingInputInstall" placeholder="admin">
+        <label for="floatingInputInstall">User</label>
+      </div>
+
+      <div class="form-floating">
+        <input formControlName="password" type="password" class="form-control" id="floatingPasswordInstall" placeholder="Password">
+        <label for="floatingPasswordInstall">Password</label>
+      </div>
+
+      <div class="form-floating">
+        <input formControlName="password" type="password" class="form-control" id="floatingPasswordConfirmation" placeholder="Password">
+        <label for="floatingPasswordConfirmation">Con</label>
+      </div>
+
+      <button class="w-100 btn btn-lg btn-primary" type="submit" [disabled]="f.invalid">Sign in</button>
+
+
+
+
+
+
+
+      <mat-form-field>
+        <input matInput placeholder="Username" readonly formControlName="username" name="username">
+      </mat-form-field>
+      <mat-form-field>
+        <input matInput placeholder="Password" formControlName="password" type="password" name="password">
+      </mat-form-field>
+      <mat-form-field>
+        <input [errorStateMatcher]="isNotConfirmed" matInput placeholder="Confirm Password"
+               formControlName="passwordConfirmation" type="password" name="passwordConfirm">
+        <mat-error *ngIf="installerForm.errors?.['noMatch']">Passwords do not match</mat-error>
+      </mat-form-field>
+      <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary">Login</button>
+    </form>
+  </div>
 </main>

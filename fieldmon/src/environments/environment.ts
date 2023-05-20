@@ -12,8 +12,8 @@ const mqtt_parameters: IClientOptions = {
 }
 
 const apiParameters = {
-  http_base: "http://localhost:8080/api",
-  ws_base: "ws://localhost:8080/api/ws"
+  http_base: "http://127.0.0.1:8080/api",
+  ws_base: "ws://127.0.0.1:8080/api/ws"
 }
 
 

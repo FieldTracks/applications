@@ -55,7 +55,7 @@
                    formControlName="passwordConfirmation" type="password" name="passwordConfirm">
             <mat-error *ngIf="installerForm.errors?.['noMatch']">Passwords do not match</mat-error>
           </mat-form-field>
-          <button type="submit" [disabled]="f.invalid" mat-raised-button color="primary">Login</button>
+          <button type="submit" [disabled]="f.invalid !== false" mat-raised-button color="primary">Login</button>
         </form>
       </ng-container>
 

@@ -9,6 +9,8 @@ secrets/
 **/tmp
 **/out-tsc
 **/target
+**/build/*
+**/.gradle
 
 # dependencies
 **/node_modules
@@ -43,3 +45,6 @@ secrets/
 # System Files
 **/.DS_Store
 **/Thumbs.db
+**/*.class
+**/.lck
+**/.*.swp
